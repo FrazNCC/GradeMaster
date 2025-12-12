@@ -55,6 +55,18 @@
         Database, Download, Upload
       } from 'lucide-react';
 
+      // --- HELPERS ---
+      const generateId = () => {
+        if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+          try {
+            return crypto.randomUUID();
+          } catch (e) {
+            // Fallback for insecure contexts
+          }
+        }
+        return Date.now().toString(36) + Math.random().toString(36).substr(2);
+      };
+
       // --- TYPES & ENUMS (Converted to const objects for runtime safety) ---
 
       const QualificationType = {
@@ -125,7 +137,6 @@
       };
 
       // Level 2 Point Tables (BTEC Firsts 2012/Next Gen)
-      // Standard scale: 30GLH (L1P:6, L2P:12, L2M:18, L2D:24)
       const L2_POINT_TABLES = {
         30: {
             [UnitType.INTERNAL]: { [Grade.U]: 0, [Grade.L1P]: 6, [Grade.L2P]: 12, [Grade.L2M]: 18, [Grade.L2D]: 24 },
@@ -135,27 +146,22 @@
             [UnitType.INTERNAL]: { [Grade.U]: 0, [Grade.L1P]: 12, [Grade.L2P]: 24, [Grade.L2M]: 36, [Grade.L2D]: 48 },
             [UnitType.EXTERNAL]: { [Grade.U]: 0, [Grade.L1P]: 12, [Grade.L2P]: 24, [Grade.L2M]: 36, [Grade.L2D]: 48 },
         },
-        120: { // Rarely used in some specs, but double 60 logic
+        120: {
             [UnitType.INTERNAL]: { [Grade.U]: 0, [Grade.L1P]: 24, [Grade.L2P]: 48, [Grade.L2M]: 72, [Grade.L2D]: 96 },
             [UnitType.EXTERNAL]: { [Grade.U]: 0, [Grade.L1P]: 24, [Grade.L2P]: 48, [Grade.L2M]: 72, [Grade.L2D]: 96 },
         }
       };
 
       // Level 1 Point Tables (Introductory)
-      // Generic robust L1 scale assumption: P=1.5, M=2, D=2.5 per 10 GLH approx, or standardized to max 360GLH points.
-      // We will use: P=10, M=20, D=30 for 60 GLH approx scaled.
-      // Let's use a scale that works with 360GLH Diploma max (approx 150-180 points).
-      // 30 GLH: P=5, M=10, D=15.
       const L1_POINT_TABLES = {
         30: {
              [UnitType.INTERNAL]: { [Grade.U]: 0, [Grade.P]: 5, [Grade.M]: 10, [Grade.D]: 15 },
-             [UnitType.EXTERNAL]: { [Grade.U]: 0, [Grade.P]: 5, [Grade.M]: 10, [Grade.D]: 15 }, // Assuming parity for calc
+             [UnitType.EXTERNAL]: { [Grade.U]: 0, [Grade.P]: 5, [Grade.M]: 10, [Grade.D]: 15 }, 
         },
         60: {
              [UnitType.INTERNAL]: { [Grade.U]: 0, [Grade.P]: 10, [Grade.M]: 20, [Grade.D]: 30 },
              [UnitType.EXTERNAL]: { [Grade.U]: 0, [Grade.P]: 10, [Grade.M]: 20, [Grade.D]: 30 },
         },
-        // Core units often 30 or 60.
       };
 
       const GRADE_BOUNDARIES = {
@@ -194,7 +200,6 @@
           { minPoints: 270, grade: "D*D*D*", ucas: 168 },
         ],
         // --- LEVEL 2 (BTEC Firsts) ---
-        // Thresholds approx: L1P, L2P, L2M, L2D, L2D*
         [QualificationType.L2_AWARD]: [
              { minPoints: 24, grade: "L1 Pass", ucas: 0 },
              { minPoints: 48, grade: "L2 Pass", ucas: 0 },
@@ -346,11 +351,11 @@
         return { totalPoints, grade: achievedGrade, ucasPoints: achievedUcas, nextGradeBoundary: nextBoundary };
       };
 
-      const mergeUnitsAndGrades = (templates, studentGrades, lockedGrades) => {
+      const mergeUnitsAndGrades = (templates, studentGrades = {}, lockedGrades = {}) => {
         return templates.map(template => ({
           ...template,
-          grade: studentGrades[template.id] || Grade.U,
-          isLocked: lockedGrades ? !!lockedGrades[template.id] : false
+          grade: studentGrades?.[template.id] || Grade.U,
+          isLocked: !!lockedGrades?.[template.id]
         }));
       };
 
@@ -548,7 +553,7 @@
             if (editingUser) {
                 setUsers(prev => prev.map(u => u.id === editingUser.id ? { ...u, ...formData } : u));
             } else {
-                setUsers(prev => [...prev, { id: crypto.randomUUID(), ...formData }]);
+                setUsers(prev => [...prev, { id: generateId(), ...formData }]);
             }
             setView('list');
             setEditingUser(null);
@@ -880,16 +885,16 @@
         });
 
         // Determine permissions
-        const isEditor = currentUser.role === UserRole.ADMIN || currentUser.role === UserRole.SUPERUSER;
+        const isEditor = currentUser.role === UserRole.ADMIN || currentUser.role === UserRole.SUPERUSER || currentUser.role === UserRole.TEACHER;
         const isSuperuser = currentUser.role === UserRole.SUPERUSER;
 
         const handleCreate = () => {
             setEditingCourse(null);
-            // Default units based on subject
-            let defaultUnits = SAMPLE_UNITS_ESPORTS;
-            if (formData.subject === Subject.IT) defaultUnits = SAMPLE_UNITS_IT;
-            if (formData.subject === Subject.ICT_L2) defaultUnits = SAMPLE_UNITS_ICT_L2;
-            if (formData.subject === Subject.VOCATIONAL_L1) defaultUnits = SAMPLE_UNITS_VOC_L1;
+            // Default units based on subject with unique IDs
+            let defaultUnits = SAMPLE_UNITS_ESPORTS.map(u => ({...u, id: generateId()}));
+            if (formData.subject === Subject.IT) defaultUnits = SAMPLE_UNITS_IT.map(u => ({...u, id: generateId()}));
+            if (formData.subject === Subject.ICT_L2) defaultUnits = SAMPLE_UNITS_ICT_L2.map(u => ({...u, id: generateId()}));
+            if (formData.subject === Subject.VOCATIONAL_L1) defaultUnits = SAMPLE_UNITS_VOC_L1.map(u => ({...u, id: generateId()}));
             
             setFormData({
                 title: '',
@@ -1076,10 +1081,11 @@
                                     value={formData.subject}
                                     onChange={e => {
                                         const newSubject = e.target.value;
-                                        let newUnits = [...SAMPLE_UNITS_ESPORTS];
-                                        if (newSubject === Subject.IT) newUnits = [...SAMPLE_UNITS_IT];
-                                        if (newSubject === Subject.ICT_L2) newUnits = [...SAMPLE_UNITS_ICT_L2];
-                                        if (newSubject === Subject.VOCATIONAL_L1) newUnits = [...SAMPLE_UNITS_VOC_L1];
+                                        // Ensure units get new unique IDs when subject changes
+                                        let newUnits = SAMPLE_UNITS_ESPORTS.map(u => ({...u, id: generateId()}));
+                                        if (newSubject === Subject.IT) newUnits = SAMPLE_UNITS_IT.map(u => ({...u, id: generateId()}));
+                                        if (newSubject === Subject.ICT_L2) newUnits = SAMPLE_UNITS_ICT_L2.map(u => ({...u, id: generateId()}));
+                                        if (newSubject === Subject.VOCATIONAL_L1) newUnits = SAMPLE_UNITS_VOC_L1.map(u => ({...u, id: generateId()}));
                                         
                                         // Auto-select a typical qualification for the subject
                                         let newQual = formData.qualification;
@@ -1116,7 +1122,7 @@
                                 <h3 className="text-lg font-bold text-slate-900">Units</h3>
                                 <button
                                     type="button"
-                                    onClick={() => setFormData({...formData, units: [...formData.units, { id: crypto.randomUUID(), name: 'New Unit', glh: 60, type: UnitType.INTERNAL }]})}
+                                    onClick={() => setFormData({...formData, units: [...formData.units, { id: generateId(), name: 'New Unit', glh: 60, type: UnitType.INTERNAL }]})}
                                     className="text-sm text-brand-600 font-medium hover:text-brand-700 flex items-center"
                                 >
                                     <Plus className="w-4 h-4 mr-1" /> Add Unit
@@ -1193,18 +1199,26 @@
       const StudentManager = ({ course, onBack, onUpdateCourse, currentUser }) => {
         const [view, setView] = useState('list');
         const [activeStudent, setActiveStudent] = useState(null);
+        const [showAddStudentModal, setShowAddStudentModal] = useState(false);
+        const [newStudentName, setNewStudentName] = useState('');
         
         // Permissions
-        const isEditor = currentUser.role === UserRole.ADMIN || currentUser.role === UserRole.SUPERUSER;
-        const canLock = currentUser.role === UserRole.TEACHER || isEditor;
-        const canUnlock = isEditor;
+        const isAdmin = currentUser.role === UserRole.ADMIN || currentUser.role === UserRole.SUPERUSER;
+        // Allow teachers to manage students (add/remove/edit)
+        const canManageStudents = isAdmin || currentUser.role === UserRole.TEACHER;
+        
+        const canLock = currentUser.role === UserRole.TEACHER || isAdmin;
+        const canUnlock = isAdmin;
 
-        const handleAddStudent = () => {
-             const name = prompt("Enter Student Name:");
-             if (name) {
-                 const newStudent = { id: crypto.randomUUID(), name, grades: {} };
-                 const updatedStudents = [...course.students, newStudent];
+        const handleAddStudentSubmit = (e) => {
+             e.preventDefault();
+             if (newStudentName.trim()) {
+                 const newStudent = { id: generateId(), name: newStudentName.trim(), grades: {} };
+                 const currentStudents = course.students || [];
+                 const updatedStudents = [...currentStudents, newStudent];
                  onUpdateCourse(course.id, { students: updatedStudents });
+                 setNewStudentName('');
+                 setShowAddStudentModal(false);
              }
         };
 
@@ -1218,7 +1232,8 @@
 
         const handleGradeChange = (unitId, grade) => {
             if (!activeStudent) return;
-            const updatedGrades = { ...activeStudent.grades, [unitId]: grade };
+            const currentGrades = activeStudent.grades || {};
+            const updatedGrades = { ...currentGrades, [unitId]: grade };
             const updatedStudent = { ...activeStudent, grades: updatedGrades };
             
             // Optimistic update local state
@@ -1276,7 +1291,7 @@
                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                                 <div className="flex-1">
                                     <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Student Name</label>
-                                    {isEditor ? (
+                                    {canManageStudents ? (
                                         <input 
                                             type="text" 
                                             value={activeStudent.name}
@@ -1362,7 +1377,45 @@
 
         // List View
         return (
-            <div className="space-y-6">
+            <div className="space-y-6 relative">
+                 {/* Add Student Modal */}
+                 {showAddStudentModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+                        <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+                            <h3 className="text-lg font-bold text-slate-900 mb-4">Add New Student</h3>
+                            <form onSubmit={handleAddStudentSubmit}>
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
+                                    <input 
+                                        type="text" 
+                                        autoFocus
+                                        required
+                                        value={newStudentName}
+                                        onChange={(e) => setNewStudentName(e.target.value)}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-brand-500 focus:border-brand-500 outline-none"
+                                        placeholder="e.g. John Doe"
+                                    />
+                                </div>
+                                <div className="flex justify-end space-x-3">
+                                    <button 
+                                        type="button"
+                                        onClick={() => setShowAddStudentModal(false)}
+                                        className="px-4 py-2 text-slate-700 hover:bg-slate-100 rounded-lg font-medium transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button 
+                                        type="submit"
+                                        className="px-4 py-2 bg-brand-600 text-white hover:bg-brand-700 rounded-lg font-medium transition-colors"
+                                    >
+                                        Add Student
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                 )}
+
                 <div className="flex items-center justify-between">
                     <button onClick={onBack} className="flex items-center text-slate-500 hover:text-slate-900 transition-colors">
                         <ArrowLeft className="w-4 h-4 mr-1" /> Back to Dashboard
@@ -1379,9 +1432,9 @@
                                 <span className="flex items-center"><ShieldCheck className="w-4 h-4 mr-1" /> {course.qualification}</span>
                              </div>
                         </div>
-                        {isEditor && (
+                        {canManageStudents && (
                             <button 
-                                onClick={handleAddStudent}
+                                onClick={() => setShowAddStudentModal(true)}
                                 className="flex items-center px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 shadow-sm transition-colors text-sm font-medium"
                             >
                                 <UserPlus className="w-4 h-4 mr-2" />
@@ -1392,7 +1445,7 @@
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {course.students.map(student => {
+                    {(course.students || []).map(student => {
                         const unitsWithGrades = mergeUnitsAndGrades(course.units, student.grades);
                         const results = calculateQualification(unitsWithGrades, course.qualification);
                         
@@ -1412,7 +1465,7 @@
                                             <p className="text-xs text-slate-500">ID: {student.id.slice(0, 6)}</p>
                                         </div>
                                     </div>
-                                    {isEditor && (
+                                    {canManageStudents && (
                                         <button 
                                             onClick={(e) => handleDeleteStudent(e, student.id)}
                                             className="text-slate-300 hover:text-red-500 transition-colors"
@@ -1442,13 +1495,13 @@
                         );
                     })}
                     
-                    {course.students.length === 0 && (
+                    {(course.students || []).length === 0 && (
                         <div className="col-span-full py-12 text-center bg-slate-50 border-2 border-dashed border-slate-200 rounded-xl">
                             <Users className="w-12 h-12 mx-auto text-slate-300 mb-3" />
                             <h3 className="text-lg font-medium text-slate-900">No Students Yet</h3>
                             <p className="text-slate-500 mb-4">Add students to this course to start tracking grades.</p>
-                            {isEditor && (
-                                <button onClick={handleAddStudent} className="text-brand-600 font-medium hover:underline">
+                            {canManageStudents && (
+                                <button onClick={() => setShowAddStudentModal(true)} className="text-brand-600 font-medium hover:underline">
                                     Add your first student
                                 </button>
                             )}
@@ -1475,7 +1528,7 @@
                 academicYear: '2024-25',
                 subject: Subject.ESPORTS, 
                 qualification: QualificationType.EXTENDED_DIPLOMA, 
-                units: [...SAMPLE_UNITS_ESPORTS],
+                units: SAMPLE_UNITS_ESPORTS.map(u => ({...u, id: generateId()})),
                 students: []
             },
             { 
@@ -1484,7 +1537,7 @@
                 academicYear: '2024-25',
                 subject: Subject.IT, 
                 qualification: QualificationType.EXTENDED_DIPLOMA, 
-                units: [...SAMPLE_UNITS_IT],
+                units: SAMPLE_UNITS_IT.map(u => ({...u, id: generateId()})),
                 students: []
             }
         ]);
@@ -1504,7 +1557,7 @@
         };
 
         const handleCreateCourse = (courseData) => {
-             setCourses(prev => [...prev, { id: crypto.randomUUID(), students: [], ...courseData }]);
+             setCourses(prev => [...prev, { id: generateId(), students: [], ...courseData }]);
         };
 
         const handleUpdateCourse = (id, updates) => {
