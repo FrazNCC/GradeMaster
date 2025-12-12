@@ -63,6 +63,22 @@
         return Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9) + '-' + _uniqueIdCounter;
       };
 
+      const sortUnits = (units) => {
+        return [...units].sort((a, b) => {
+           const getNum = (str) => {
+             const unitMatch = str.match(/Unit\s+(\d+)/i);
+             if (unitMatch) return parseInt(unitMatch[1], 10);
+             const aMatch = str.match(/^A(\d+)/i); // For A1, A2
+             if (aMatch) return parseInt(aMatch[1], 10);
+             return 9999;
+           };
+           const nA = getNum(a.name);
+           const nB = getNum(b.name);
+           if (nA !== nB) return nA - nB;
+           return a.name.localeCompare(b.name);
+        });
+      };
+
       // --- TYPES & ENUMS (Converted to const objects for runtime safety) ---
 
       const QualificationType = {
@@ -252,8 +268,8 @@
         { name: "Unit 1: The Online World", glh: 30, type: UnitType.EXTERNAL },
         { name: "Unit 2: Technology Systems", glh: 30, type: UnitType.EXTERNAL },
         { name: "Unit 3: A Digital Portfolio", glh: 30, type: UnitType.INTERNAL },
+        { name: "Unit 9: Spreadsheet Development", glh: 30, type: UnitType.INTERNAL },
         { name: "Unit 13: Website Development", glh: 60, type: UnitType.INTERNAL },
-        { name: "Unit 9: Spreadsheet Development", glh: 30, type: UnitType.INTERNAL }
       ];
 
       const SAMPLE_UNITS_VOC_L1 = [
@@ -897,7 +913,7 @@
                 year: '2025-26',
                 subject: Subject.ESPORTS,
                 qualification: QualificationType.EXTENDED_DIPLOMA,
-                units: [...defaultUnits]
+                units: sortUnits([...defaultUnits])
             });
             setView('form');
         };
@@ -909,7 +925,7 @@
                 year: course.academicYear,
                 subject: course.subject,
                 qualification: course.qualification,
-                units: course.units
+                units: sortUnits(course.units)
             });
             setView('form');
         };
@@ -1094,7 +1110,7 @@
                                         setFormData({
                                             ...formData, 
                                             subject: newSubject,
-                                            units: newUnits,
+                                            units: sortUnits(newUnits),
                                             qualification: newQual
                                         });
                                     }}
@@ -1272,6 +1288,7 @@
         // Editor View
         if (view === 'editor' && activeStudent) {
             const unitsWithGrades = mergeUnitsAndGrades(course.units, activeStudent.grades, activeStudent.lockedGrades);
+            const sortedUnits = sortUnits(unitsWithGrades);
             const results = calculateQualification(unitsWithGrades, course.qualification);
             const availableGrades = getAvailableGrades(course.qualification);
 
@@ -1322,7 +1339,7 @@
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-slate-200">
-                                        {unitsWithGrades.map((unit) => (
+                                        {sortedUnits.map((unit) => (
                                             <tr key={unit.id} className="hover:bg-slate-50 transition-colors">
                                                 <td className="px-6 py-4">
                                                     <div className="text-sm font-medium text-slate-900">{unit.name}</div>
@@ -1527,7 +1544,7 @@
                 academicYear: '2024-25',
                 subject: Subject.ESPORTS, 
                 qualification: QualificationType.EXTENDED_DIPLOMA, 
-                units: SAMPLE_UNITS_ESPORTS.map(u => ({...u, id: generateId()})),
+                units: sortUnits(SAMPLE_UNITS_ESPORTS.map(u => ({...u, id: generateId()}))),
                 students: []
             },
             { 
@@ -1536,7 +1553,7 @@
                 academicYear: '2024-25',
                 subject: Subject.IT, 
                 qualification: QualificationType.EXTENDED_DIPLOMA, 
-                units: SAMPLE_UNITS_IT.map(u => ({...u, id: generateId()})),
+                units: sortUnits(SAMPLE_UNITS_IT.map(u => ({...u, id: generateId()}))),
                 students: []
             }
         ]);
