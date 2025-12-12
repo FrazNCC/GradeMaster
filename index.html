@@ -58,16 +58,26 @@
       // --- TYPES & ENUMS (Converted to const objects for runtime safety) ---
 
       const QualificationType = {
+        // Level 3
         EXTENDED_CERTIFICATE: "Extended Certificate (360 GLH)",
         FOUNDATION_DIPLOMA: "Foundation Diploma (510/540 GLH)",
         DIPLOMA: "Diploma (720 GLH)",
-        EXTENDED_DIPLOMA: "Extended Diploma (1080 GLH)"
+        EXTENDED_DIPLOMA: "Extended Diploma (1080 GLH)",
+        // Level 2 (BTEC Firsts)
+        L2_AWARD: "Level 2 Award (120 GLH)",
+        L2_CERTIFICATE: "Level 2 Certificate (240 GLH)",
+        L2_EXTENDED_CERTIFICATE: "Level 2 Extended Certificate (360 GLH)",
+        L2_DIPLOMA: "Level 2 Diploma (480 GLH)",
+        // Level 1
+        L1_INTRO_DIPLOMA: "Level 1 Introductory Diploma (360 GLH)"
       };
 
       const Subject = {
         ESPORTS: "Esports",
         IT: "Information Technology",
-        COMPUTING: "Computing"
+        COMPUTING: "Computing",
+        ICT_L2: "Information & Creative Tech (Level 2)",
+        VOCATIONAL_L1: "Vocational Studies (Level 1)"
       };
 
       const UnitType = {
@@ -76,11 +86,18 @@
       };
 
       const Grade = {
+        // Common
         U: "U",
+        // Level 3 Grades
         NP: "NP", // Near Pass (External only)
         P: "P",
         M: "M",
-        D: "D"
+        D: "D",
+        // Level 2 Specific Grades
+        L1P: "L1P", // Level 1 Pass
+        L2P: "L2P", // Level 2 Pass
+        L2M: "L2M", // Level 2 Merit
+        L2D: "L2D"  // Level 2 Distinction
       };
 
       const UserRole = {
@@ -89,10 +106,9 @@
         TEACHER: "Teacher"
       };
 
-      // Interfaces handled implicitly via JSDoc/Props in plain JS/Babel environment
-
       // --- CONSTANTS ---
 
+      // Level 3 Point Tables
       const POINT_TABLES = {
         60: {
           [UnitType.INTERNAL]: { [Grade.U]: 0, [Grade.NP]: 0, [Grade.P]: 6, [Grade.M]: 10, [Grade.D]: 16 },
@@ -108,7 +124,42 @@
         }
       };
 
+      // Level 2 Point Tables (BTEC Firsts 2012/Next Gen)
+      // Standard scale: 30GLH (L1P:6, L2P:12, L2M:18, L2D:24)
+      const L2_POINT_TABLES = {
+        30: {
+            [UnitType.INTERNAL]: { [Grade.U]: 0, [Grade.L1P]: 6, [Grade.L2P]: 12, [Grade.L2M]: 18, [Grade.L2D]: 24 },
+            [UnitType.EXTERNAL]: { [Grade.U]: 0, [Grade.L1P]: 6, [Grade.L2P]: 12, [Grade.L2M]: 18, [Grade.L2D]: 24 },
+        },
+        60: {
+            [UnitType.INTERNAL]: { [Grade.U]: 0, [Grade.L1P]: 12, [Grade.L2P]: 24, [Grade.L2M]: 36, [Grade.L2D]: 48 },
+            [UnitType.EXTERNAL]: { [Grade.U]: 0, [Grade.L1P]: 12, [Grade.L2P]: 24, [Grade.L2M]: 36, [Grade.L2D]: 48 },
+        },
+        120: { // Rarely used in some specs, but double 60 logic
+            [UnitType.INTERNAL]: { [Grade.U]: 0, [Grade.L1P]: 24, [Grade.L2P]: 48, [Grade.L2M]: 72, [Grade.L2D]: 96 },
+            [UnitType.EXTERNAL]: { [Grade.U]: 0, [Grade.L1P]: 24, [Grade.L2P]: 48, [Grade.L2M]: 72, [Grade.L2D]: 96 },
+        }
+      };
+
+      // Level 1 Point Tables (Introductory)
+      // Generic robust L1 scale assumption: P=1.5, M=2, D=2.5 per 10 GLH approx, or standardized to max 360GLH points.
+      // We will use: P=10, M=20, D=30 for 60 GLH approx scaled.
+      // Let's use a scale that works with 360GLH Diploma max (approx 150-180 points).
+      // 30 GLH: P=5, M=10, D=15.
+      const L1_POINT_TABLES = {
+        30: {
+             [UnitType.INTERNAL]: { [Grade.U]: 0, [Grade.P]: 5, [Grade.M]: 10, [Grade.D]: 15 },
+             [UnitType.EXTERNAL]: { [Grade.U]: 0, [Grade.P]: 5, [Grade.M]: 10, [Grade.D]: 15 }, // Assuming parity for calc
+        },
+        60: {
+             [UnitType.INTERNAL]: { [Grade.U]: 0, [Grade.P]: 10, [Grade.M]: 20, [Grade.D]: 30 },
+             [UnitType.EXTERNAL]: { [Grade.U]: 0, [Grade.P]: 10, [Grade.M]: 20, [Grade.D]: 30 },
+        },
+        // Core units often 30 or 60.
+      };
+
       const GRADE_BOUNDARIES = {
+        // --- LEVEL 3 ---
         [QualificationType.EXTENDED_CERTIFICATE]: [
           { minPoints: 36, grade: "P", ucas: 16 },
           { minPoints: 52, grade: "M", ucas: 32 },
@@ -141,6 +192,44 @@
           { minPoints: 234, grade: "D*DD", ucas: 152 },
           { minPoints: 252, grade: "D*D*D", ucas: 160 },
           { minPoints: 270, grade: "D*D*D*", ucas: 168 },
+        ],
+        // --- LEVEL 2 (BTEC Firsts) ---
+        // Thresholds approx: L1P, L2P, L2M, L2D, L2D*
+        [QualificationType.L2_AWARD]: [
+             { minPoints: 24, grade: "L1 Pass", ucas: 0 },
+             { minPoints: 48, grade: "L2 Pass", ucas: 0 },
+             { minPoints: 72, grade: "L2 Merit", ucas: 0 },
+             { minPoints: 96, grade: "L2 Distinction", ucas: 0 },
+             { minPoints: 100, grade: "L2 Distinction*", ucas: 0 } 
+        ],
+        [QualificationType.L2_CERTIFICATE]: [
+             { minPoints: 48, grade: "L1 Pass", ucas: 0 },
+             { minPoints: 96, grade: "L2 Pass", ucas: 0 },
+             { minPoints: 144, grade: "L2 Merit", ucas: 0 },
+             { minPoints: 192, grade: "L2 Distinction", ucas: 0 },
+             { minPoints: 200, grade: "L2 Distinction*", ucas: 0 }
+        ],
+        [QualificationType.L2_EXTENDED_CERTIFICATE]: [
+             { minPoints: 72, grade: "L1 Pass", ucas: 0 },
+             { minPoints: 144, grade: "L2 Pass", ucas: 0 },
+             { minPoints: 216, grade: "L2 Merit", ucas: 0 },
+             { minPoints: 288, grade: "L2 Distinction", ucas: 0 },
+             { minPoints: 300, grade: "L2 Distinction*", ucas: 0 }
+        ],
+        [QualificationType.L2_DIPLOMA]: [
+             { minPoints: 130, grade: "L2 PP", ucas: 0 },
+             { minPoints: 180, grade: "L2 MP", ucas: 0 },
+             { minPoints: 230, grade: "L2 MM", ucas: 0 },
+             { minPoints: 280, grade: "L2 DM", ucas: 0 },
+             { minPoints: 330, grade: "L2 DD", ucas: 0 },
+             { minPoints: 350, grade: "L2 D*D", ucas: 0 },
+             { minPoints: 370, grade: "L2 D*D*", ucas: 0 },
+        ],
+        // --- LEVEL 1 (Introductory) ---
+        [QualificationType.L1_INTRO_DIPLOMA]: [
+             { minPoints: 60, grade: "Pass", ucas: 0 },
+             { minPoints: 110, grade: "Merit", ucas: 0 },
+             { minPoints: 150, grade: "Distinction", ucas: 0 },
         ]
       };
 
@@ -157,15 +246,70 @@
         { name: "Unit 3: Using Social Media in Business", glh: 90, type: UnitType.INTERNAL },
         { name: "Unit 6: Website Development", glh: 60, type: UnitType.INTERNAL }
       ];
+      
+      const SAMPLE_UNITS_ICT_L2 = [
+        { name: "Unit 1: The Online World", glh: 30, type: UnitType.EXTERNAL },
+        { name: "Unit 2: Technology Systems", glh: 30, type: UnitType.EXTERNAL },
+        { name: "Unit 3: A Digital Portfolio", glh: 30, type: UnitType.INTERNAL },
+        { name: "Unit 13: Website Development", glh: 60, type: UnitType.INTERNAL },
+        { name: "Unit 9: Spreadsheet Development", glh: 30, type: UnitType.INTERNAL }
+      ];
+
+      const SAMPLE_UNITS_VOC_L1 = [
+        { name: "A1: Being Organised", glh: 30, type: UnitType.INTERNAL },
+        { name: "A2: Developing a Personal Progression Plan", glh: 30, type: UnitType.INTERNAL },
+        { name: "Unit 5: Contribute to a Team", glh: 30, type: UnitType.INTERNAL },
+        { name: "Unit 6: Customer Service", glh: 30, type: UnitType.INTERNAL }
+      ];
 
       // --- SERVICES ---
+      
+      const getAvailableGrades = (qualType) => {
+          if (qualType.startsWith("Level 2")) {
+              return [Grade.U, Grade.L1P, Grade.L2P, Grade.L2M, Grade.L2D];
+          }
+          if (qualType.startsWith("Level 1")) {
+              return [Grade.U, Grade.P, Grade.M, Grade.D];
+          }
+          // Default Level 3
+          return [Grade.U, Grade.NP, Grade.P, Grade.M, Grade.D];
+      };
 
-      const calculatePointsForUnit = (unit) => {
+      const calculatePointsForUnit = (unit, qualType) => {
         const { glh, type, grade } = unit;
-        if (POINT_TABLES[glh] && POINT_TABLES[glh][type] && POINT_TABLES[glh][type][grade] !== undefined) {
-          return POINT_TABLES[glh][type][grade];
+        let table = POINT_TABLES;
+        
+        // Determine which table to use
+        if (qualType.startsWith("Level 2")) {
+            table = L2_POINT_TABLES;
+        } else if (qualType.startsWith("Level 1")) {
+            table = L1_POINT_TABLES;
         }
+
+        if (table[glh] && table[glh][type] && table[glh][type][grade] !== undefined) {
+          return table[glh][type][grade];
+        }
+        
+        // Fallback multipliers if exact GLH table missing
         let multiplier = 0;
+        if (qualType.startsWith("Level 2")) {
+             // L2 Scale: L1P=0.2/GLH, L2P=0.4, L2M=0.6, L2D=0.8
+             if (grade === Grade.L1P) multiplier = 0.2;
+             if (grade === Grade.L2P) multiplier = 0.4;
+             if (grade === Grade.L2M) multiplier = 0.6;
+             if (grade === Grade.L2D) multiplier = 0.8;
+             return Math.round(glh * multiplier);
+        }
+        
+        if (qualType.startsWith("Level 1")) {
+            // L1 Scale approx
+            if (grade === Grade.P) multiplier = 0.16;
+            if (grade === Grade.M) multiplier = 0.33;
+            if (grade === Grade.D) multiplier = 0.5;
+            return Math.round(glh * multiplier);
+        }
+
+        // Level 3 Default Logic
         if (type === UnitType.INTERNAL) {
             if (grade === Grade.P) multiplier = 1;
             if (grade === Grade.M) multiplier = 1.666;
@@ -180,8 +324,8 @@
       };
 
       const calculateQualification = (units, qualType) => {
-        const totalPoints = units.reduce((sum, unit) => sum + calculatePointsForUnit(unit), 0);
-        const boundaries = GRADE_BOUNDARIES[qualType];
+        const totalPoints = units.reduce((sum, unit) => sum + calculatePointsForUnit(unit, qualType), 0);
+        const boundaries = GRADE_BOUNDARIES[qualType] || [];
         let achievedGrade = "U";
         let achievedUcas = 0;
         let nextBoundary = undefined;
@@ -741,7 +885,12 @@
 
         const handleCreate = () => {
             setEditingCourse(null);
-            const defaultUnits = formData.subject === Subject.ESPORTS ? SAMPLE_UNITS_ESPORTS : SAMPLE_UNITS_IT;
+            // Default units based on subject
+            let defaultUnits = SAMPLE_UNITS_ESPORTS;
+            if (formData.subject === Subject.IT) defaultUnits = SAMPLE_UNITS_IT;
+            if (formData.subject === Subject.ICT_L2) defaultUnits = SAMPLE_UNITS_ICT_L2;
+            if (formData.subject === Subject.VOCATIONAL_L1) defaultUnits = SAMPLE_UNITS_VOC_L1;
+            
             setFormData({
                 title: '',
                 year: '2025-26',
@@ -770,7 +919,7 @@
             // Prevent default button behavior
             e.preventDefault();
 
-            // Direct confirm without setTimeout logic which can sometimes be flaky if not handled perfectly
+            // Direct confirm without setTimeout logic
             if (window.confirm("Are you sure you want to delete this course? This cannot be undone.")) {
                 onDelete(courseId);
             }
@@ -927,10 +1076,22 @@
                                     value={formData.subject}
                                     onChange={e => {
                                         const newSubject = e.target.value;
+                                        let newUnits = [...SAMPLE_UNITS_ESPORTS];
+                                        if (newSubject === Subject.IT) newUnits = [...SAMPLE_UNITS_IT];
+                                        if (newSubject === Subject.ICT_L2) newUnits = [...SAMPLE_UNITS_ICT_L2];
+                                        if (newSubject === Subject.VOCATIONAL_L1) newUnits = [...SAMPLE_UNITS_VOC_L1];
+                                        
+                                        // Auto-select a typical qualification for the subject
+                                        let newQual = formData.qualification;
+                                        if (newSubject === Subject.ICT_L2) newQual = QualificationType.L2_EXTENDED_CERTIFICATE;
+                                        if (newSubject === Subject.VOCATIONAL_L1) newQual = QualificationType.L1_INTRO_DIPLOMA;
+                                        if (newSubject === Subject.ESPORTS || newSubject === Subject.IT) newQual = QualificationType.EXTENDED_DIPLOMA;
+
                                         setFormData({
                                             ...formData, 
                                             subject: newSubject,
-                                            units: newSubject === Subject.ESPORTS ? [...SAMPLE_UNITS_ESPORTS] : [...SAMPLE_UNITS_IT]
+                                            units: newUnits,
+                                            qualification: newQual
                                         });
                                     }}
                                     className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-brand-500 focus:border-brand-500"
@@ -982,6 +1143,7 @@
                                             onChange={e => updateUnitGLH(idx, e.target.value)}
                                             className="block w-24 px-2 py-1 text-xs border border-slate-200 rounded bg-white"
                                         >
+                                            <option value="30">30 GLH</option>
                                             <option value="60">60 GLH</option>
                                             <option value="90">90 GLH</option>
                                             <option value="120">120 GLH</option>
@@ -1071,10 +1233,6 @@
             if (!activeStudent) return;
             const currentLockState = activeStudent.lockedGrades?.[unitId] || false;
             
-            // Logic: 
-            // If locked (true): Only Admin/Superuser can unlock (set to false)
-            // If unlocked (false): Teacher/Admin/Superuser can lock (set to true)
-            
             if (currentLockState && !canUnlock) {
                 alert("Only Administrators can unlock a grade once it has been verified.");
                 return;
@@ -1097,10 +1255,11 @@
              onUpdateCourse(course.id, { students: updatedStudents });
         };
 
-        // Editor View (Fixed Header + Scrollable Body)
+        // Editor View
         if (view === 'editor' && activeStudent) {
             const unitsWithGrades = mergeUnitsAndGrades(course.units, activeStudent.grades, activeStudent.lockedGrades);
             const results = calculateQualification(unitsWithGrades, course.qualification);
+            const availableGrades = getAvailableGrades(course.qualification);
 
             return (
                 <div className="flex flex-col h-[calc(100vh-100px)]"> 
@@ -1171,8 +1330,7 @@
                                                             unit.isLocked ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-white'
                                                         }`}
                                                     >
-                                                        {Object.values(Grade).map((g) => {
-                                                            if (unit.type === UnitType.INTERNAL && g === Grade.NP) return null;
+                                                        {availableGrades.map((g) => {
                                                             return <option key={g} value={g}>{g}</option>;
                                                         })}
                                                     </select>
@@ -1506,6 +1664,7 @@
                                         <div className={`h-2 w-full ${
                                             course.subject === Subject.ESPORTS ? 'bg-gradient-to-r from-purple-500 to-pink-500' : 
                                             course.subject === Subject.IT ? 'bg-gradient-to-r from-blue-500 to-cyan-500' : 
+                                            course.subject === Subject.ICT_L2 ? 'bg-gradient-to-r from-orange-400 to-yellow-500' :
                                             'bg-gradient-to-r from-emerald-500 to-teal-500'
                                         }`}></div>
                                         
