@@ -56,15 +56,11 @@
       } from 'lucide-react';
 
       // --- HELPERS ---
+      // Uses a counter to guarantee uniqueness even in tight loops where Math.random might collide or Date.now is identical
+      let _uniqueIdCounter = 0;
       const generateId = () => {
-        if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-          try {
-            return crypto.randomUUID();
-          } catch (e) {
-            // Fallback for insecure contexts
-          }
-        }
-        return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        _uniqueIdCounter++;
+        return Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9) + '-' + _uniqueIdCounter;
       };
 
       // --- TYPES & ENUMS (Converted to const objects for runtime safety) ---
@@ -949,14 +945,16 @@
         };
 
         const toggleUnitType = (index) => {
-             const newUnits = [...formData.units];
-             newUnits[index].type = newUnits[index].type === UnitType.INTERNAL ? UnitType.EXTERNAL : UnitType.INTERNAL;
+             const newUnits = formData.units.map((u, i) => 
+                i === index ? { ...u, type: u.type === UnitType.INTERNAL ? UnitType.EXTERNAL : UnitType.INTERNAL } : u
+             );
              setFormData({...formData, units: newUnits});
         };
 
         const updateUnitGLH = (index, glh) => {
-             const newUnits = [...formData.units];
-             newUnits[index].glh = parseInt(glh);
+             const newUnits = formData.units.map((u, i) => 
+                i === index ? { ...u, glh: parseInt(glh) } : u
+             );
              setFormData({...formData, units: newUnits});
         };
 
@@ -1137,8 +1135,9 @@
                                                 type="text"
                                                 value={unit.name}
                                                 onChange={e => {
-                                                    const newUnits = [...formData.units];
-                                                    newUnits[idx].name = e.target.value;
+                                                    const newUnits = formData.units.map((u, i) => 
+                                                        i === idx ? { ...u, name: e.target.value } : u
+                                                    );
                                                     setFormData({...formData, units: newUnits});
                                                 }}
                                                 className="block w-full px-2 py-1 text-sm border-transparent bg-transparent focus:border-slate-300 focus:bg-white rounded hover:bg-white transition-colors"
