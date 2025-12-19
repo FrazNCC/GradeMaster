@@ -52,11 +52,10 @@
         ShieldCheck, Plus, Trash2, BookOpen, Edit2, Layout, ArrowLeft, Save, 
         Lock, Users, UserPlus, ChevronLeft, Search, GraduationCap, TrendingUp, 
         AlertCircle, LogIn, Shield, Check, X, ShieldAlert, Archive, RotateCcw,
-        Database, Download, Upload
+        Database, Download, Upload, Mail, Send, Info
       } from 'lucide-react';
 
       // --- HELPERS ---
-      // Uses a counter to guarantee uniqueness even in tight loops where Math.random might collide or Date.now is identical
       let _uniqueIdCounter = 0;
       const generateId = () => {
         _uniqueIdCounter++;
@@ -68,7 +67,7 @@
            const getNum = (str) => {
              const unitMatch = str.match(/Unit\s+(\d+)/i);
              if (unitMatch) return parseInt(unitMatch[1], 10);
-             const aMatch = str.match(/^A(\d+)/i); // For A1, A2
+             const aMatch = str.match(/^A(\d+)/i);
              if (aMatch) return parseInt(aMatch[1], 10);
              return 9999;
            };
@@ -79,20 +78,17 @@
         });
       };
 
-      // --- TYPES & ENUMS (Converted to const objects for runtime safety) ---
+      // --- TYPES & ENUMS ---
 
       const QualificationType = {
-        // Level 3
         EXTENDED_CERTIFICATE: "Extended Certificate (360 GLH)",
         FOUNDATION_DIPLOMA: "Foundation Diploma (510/540 GLH)",
         DIPLOMA: "Diploma (720 GLH)",
         EXTENDED_DIPLOMA: "Extended Diploma (1080 GLH)",
-        // Level 2 (BTEC Firsts)
         L2_AWARD: "Level 2 Award (120 GLH)",
         L2_CERTIFICATE: "Level 2 Certificate (240 GLH)",
         L2_EXTENDED_CERTIFICATE: "Level 2 Extended Certificate (360 GLH)",
         L2_DIPLOMA: "Level 2 Diploma (480 GLH)",
-        // Level 1
         L1_INTRO_DIPLOMA: "Level 1 Introductory Diploma (360 GLH)"
       };
 
@@ -110,18 +106,15 @@
       };
 
       const Grade = {
-        // Common
         U: "U",
-        // Level 3 Grades
-        NP: "NP", // Near Pass (External only)
+        NP: "NP",
         P: "P",
         M: "M",
         D: "D",
-        // Level 2 Specific Grades
-        L1P: "L1P", // Level 1 Pass
-        L2P: "L2P", // Level 2 Pass
-        L2M: "L2M", // Level 2 Merit
-        L2D: "L2D"  // Level 2 Distinction
+        L1P: "L1P",
+        L2P: "L2P",
+        L2M: "L2M",
+        L2D: "L2D"
       };
 
       const UserRole = {
@@ -132,7 +125,6 @@
 
       // --- CONSTANTS ---
 
-      // Level 3 Point Tables
       const POINT_TABLES = {
         60: {
           [UnitType.INTERNAL]: { [Grade.U]: 0, [Grade.NP]: 0, [Grade.P]: 6, [Grade.M]: 10, [Grade.D]: 16 },
@@ -148,7 +140,6 @@
         }
       };
 
-      // Level 2 Point Tables (BTEC Firsts 2012/Next Gen)
       const L2_POINT_TABLES = {
         30: {
             [UnitType.INTERNAL]: { [Grade.U]: 0, [Grade.L1P]: 6, [Grade.L2P]: 12, [Grade.L2M]: 18, [Grade.L2D]: 24 },
@@ -164,7 +155,6 @@
         }
       };
 
-      // Level 1 Point Tables (Introductory)
       const L1_POINT_TABLES = {
         30: {
              [UnitType.INTERNAL]: { [Grade.U]: 0, [Grade.P]: 5, [Grade.M]: 10, [Grade.D]: 15 },
@@ -177,7 +167,6 @@
       };
 
       const GRADE_BOUNDARIES = {
-        // --- LEVEL 3 ---
         [QualificationType.EXTENDED_CERTIFICATE]: [
           { minPoints: 36, grade: "P", ucas: 16 },
           { minPoints: 52, grade: "M", ucas: 32 },
@@ -211,7 +200,6 @@
           { minPoints: 252, grade: "D*D*D", ucas: 160 },
           { minPoints: 270, grade: "D*D*D*", ucas: 168 },
         ],
-        // --- LEVEL 2 (BTEC Firsts) ---
         [QualificationType.L2_AWARD]: [
              { minPoints: 24, grade: "L1 Pass", ucas: 0 },
              { minPoints: 48, grade: "L2 Pass", ucas: 0 },
@@ -242,7 +230,6 @@
              { minPoints: 350, grade: "L2 D*D", ucas: 0 },
              { minPoints: 370, grade: "L2 D*D*", ucas: 0 },
         ],
-        // --- LEVEL 1 (Introductory) ---
         [QualificationType.L1_INTRO_DIPLOMA]: [
              { minPoints: 60, grade: "Pass", ucas: 0 },
              { minPoints: 110, grade: "Merit", ucas: 0 },
@@ -288,7 +275,6 @@
           if (qualType.startsWith("Level 1")) {
               return [Grade.U, Grade.P, Grade.M, Grade.D];
           }
-          // Default Level 3
           return [Grade.U, Grade.NP, Grade.P, Grade.M, Grade.D];
       };
 
@@ -296,7 +282,6 @@
         const { glh, type, grade } = unit;
         let table = POINT_TABLES;
         
-        // Determine which table to use
         if (qualType.startsWith("Level 2")) {
             table = L2_POINT_TABLES;
         } else if (qualType.startsWith("Level 1")) {
@@ -307,10 +292,8 @@
           return table[glh][type][grade];
         }
         
-        // Fallback multipliers if exact GLH table missing
         let multiplier = 0;
         if (qualType.startsWith("Level 2")) {
-             // L2 Scale: L1P=0.2/GLH, L2P=0.4, L2M=0.6, L2D=0.8
              if (grade === Grade.L1P) multiplier = 0.2;
              if (grade === Grade.L2P) multiplier = 0.4;
              if (grade === Grade.L2M) multiplier = 0.6;
@@ -319,14 +302,12 @@
         }
         
         if (qualType.startsWith("Level 1")) {
-            // L1 Scale approx
             if (grade === Grade.P) multiplier = 0.16;
             if (grade === Grade.M) multiplier = 0.33;
             if (grade === Grade.D) multiplier = 0.5;
             return Math.round(glh * multiplier);
         }
 
-        // Level 3 Default Logic
         if (type === UnitType.INTERNAL) {
             if (grade === Grade.P) multiplier = 1;
             if (grade === Grade.M) multiplier = 1.666;
@@ -373,7 +354,6 @@
 
       // --- COMPONENTS ---
 
-      // 1. ResultsPanel
       const ResultsPanel = ({ results, variant = 'default' }) => {
         const pointsNeeded = results.nextGradeBoundary ? results.nextGradeBoundary.pointsNeeded : 0;
         const totalTarget = results.totalPoints + pointsNeeded;
@@ -395,7 +375,6 @@
                         </div>
                         <div className="text-brand-500 opacity-80"><TrendingUp size={20} /></div>
                     </div>
-                    
                     <div className="flex items-center space-x-6">
                         <div>
                              <div className="flex items-center text-[10px] text-slate-500 uppercase font-semibold mb-0.5">
@@ -403,7 +382,6 @@
                              </div>
                              <div className="text-lg font-bold text-slate-700 leading-none">{results.ucasPoints}</div>
                         </div>
-
                         <div>
                              <div className="flex items-center text-[10px] text-slate-500 uppercase font-semibold mb-0.5">
                                 <Calculator className="w-3 h-3 mr-1" /> Points
@@ -421,27 +399,20 @@
               <TrendingUp className="w-5 h-5 mr-2 text-brand-500" />
               Projected Outcome
             </h2>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
               <div className="space-y-6">
                 <div className="bg-brand-50 p-4 rounded-lg border border-brand-100">
                   <div className="text-sm text-brand-600 mb-1 flex items-center">
                       <TrendingUp className="w-4 h-4 mr-2" /> Projected Grade
                   </div>
-                  <div className="text-4xl font-extrabold text-brand-700">
-                    {results.grade}
-                  </div>
+                  <div className="text-4xl font-extrabold text-brand-700">{results.grade}</div>
                 </div>
-
                 <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
                   <div className="text-sm text-slate-500 mb-1 flex items-center">
                       <GraduationCap className="w-4 h-4 mr-2" /> UCAS Points
                   </div>
-                  <div className="text-3xl font-bold text-slate-900">
-                    {results.ucasPoints}
-                  </div>
+                  <div className="text-3xl font-bold text-slate-900">{results.ucasPoints}</div>
                 </div>
-
                 {results.nextGradeBoundary && (
                    <div className="flex items-start bg-amber-50 p-3 rounded-md text-amber-700 text-sm border border-amber-100">
                       <AlertCircle className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0 text-amber-500" />
@@ -451,17 +422,11 @@
                    </div>
                 )}
               </div>
-
               <div className="h-48 relative flex items-center justify-center">
-                 <svg
-                    height={radius * 2}
-                    width={radius * 2}
-                    className="transform -rotate-90"
-                  >
+                 <svg height={radius * 2} width={radius * 2} className="transform -rotate-90">
                     <circle stroke="#f1f5f9" strokeWidth={stroke} fill="transparent" r={normalizedRadius} cx={radius} cy={radius} />
                     <circle stroke="#0ea5e9" strokeWidth={stroke} strokeDasharray={circumference + ' ' + circumference} style={{ strokeDashoffset, transition: 'stroke-dashoffset 0.5s ease-in-out' }} strokeLinecap="round" fill="transparent" r={normalizedRadius} cx={radius} cy={radius} />
                   </svg>
-                  
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
                    <div className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Total</div>
                    <div className="text-2xl font-bold text-slate-800">{results.totalPoints}</div>
@@ -473,7 +438,6 @@
         );
       };
 
-      // 2. LoginScreen
       const LoginScreen = ({ users, onLogin }) => {
         const [username, setUsername] = useState('');
         const [password, setPassword] = useState('');
@@ -552,29 +516,33 @@
         );
       };
 
-      // 3. UserManagement
       const UserManagement = ({ users, setUsers, currentUser, courses, setCourses }) => {
         const [view, setView] = useState('list');
         const [editingUser, setEditingUser] = useState(null);
-        const [formData, setFormData] = useState({ username: '', password: '', role: UserRole.TEACHER });
+        const [formData, setFormData] = useState({ username: '', password: '', email: '', role: UserRole.TEACHER });
+        const [showEmailSent, setShowEmailSent] = useState(null);
 
         if (currentUser.role !== UserRole.SUPERUSER) return null;
 
         const handleSave = (e) => {
             e.preventDefault();
+            const newUser = { id: editingUser ? editingUser.id : generateId(), ...formData };
+            
             if (editingUser) {
-                setUsers(prev => prev.map(u => u.id === editingUser.id ? { ...u, ...formData } : u));
+                setUsers(prev => prev.map(u => u.id === editingUser.id ? newUser : u));
             } else {
-                setUsers(prev => [...prev, { id: generateId(), ...formData }]);
+                setUsers(prev => [...prev, newUser]);
+                // Simulate sending email
+                setShowEmailSent(newUser);
             }
             setView('list');
             setEditingUser(null);
-            setFormData({ username: '', password: '', role: UserRole.TEACHER });
+            setFormData({ username: '', password: '', email: '', role: UserRole.TEACHER });
         };
 
         const handleEdit = (user) => {
             setEditingUser(user);
-            setFormData({ username: user.username, password: user.password, role: user.role });
+            setFormData({ username: user.username, password: user.password, email: user.email || '', role: user.role });
             setView('form');
         };
 
@@ -586,55 +554,46 @@
             }
         };
 
-        const handleExportData = () => {
-            const data = {
-                users,
-                courses,
-                exportDate: new Date().toISOString(),
-                version: "1.0"
-            };
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `grademaster-backup-${new Date().toISOString().split('T')[0]}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        };
-
-        const handleImportData = (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            if (!window.confirm("Importing data will overwrite all current users, courses and student data. Are you sure you want to proceed?")) {
-                e.target.value = null; 
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                try {
-                    const data = JSON.parse(event.target.result);
-                    if (data.users && Array.isArray(data.users)) {
-                        setUsers(data.users);
-                    }
-                    if (data.courses && Array.isArray(data.courses)) {
-                        setCourses(data.courses);
-                    }
-                    alert("Data imported successfully!");
-                } catch (error) {
-                    console.error("Import error:", error);
-                    alert("Failed to import data. Invalid file format.");
-                }
-            };
-            reader.readAsText(file);
-            e.target.value = null; // Reset input
-        };
-
         return (
              <div className="space-y-6">
+                 {/* Email Sent Notification Overlay */}
+                 {showEmailSent && (
+                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+                         <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-8 relative overflow-hidden">
+                             <div className="absolute top-0 right-0 -mt-8 -mr-8 w-24 h-24 bg-brand-100 rounded-full opacity-50"></div>
+                             <div className="flex flex-col items-center text-center">
+                                 <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-6 shadow-inner">
+                                     <Mail className="w-10 h-10" />
+                                 </div>
+                                 <h3 className="text-2xl font-bold text-slate-900 mb-2">Credentials Dispatched!</h3>
+                                 <p className="text-slate-600 mb-6"> An automated email has been simulated and "sent" to <strong>{showEmailSent.email}</strong> with their login details.</p>
+                                 
+                                 <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-5 text-left space-y-3 mb-8">
+                                     <div className="flex justify-between border-b border-slate-100 pb-2">
+                                         <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Login URL</span>
+                                         <span className="text-xs font-mono text-brand-600 underline">https://grademaster.edu/login</span>
+                                     </div>
+                                     <div className="flex justify-between">
+                                         <span className="text-sm text-slate-500">Username</span>
+                                         <span className="text-sm font-bold text-slate-900">{showEmailSent.username}</span>
+                                     </div>
+                                     <div className="flex justify-between">
+                                         <span className="text-sm text-slate-500">Password</span>
+                                         <span className="text-sm font-bold text-slate-900">{showEmailSent.password}</span>
+                                     </div>
+                                 </div>
+
+                                 <button 
+                                     onClick={() => setShowEmailSent(null)}
+                                     className="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl transition-all shadow-md active:scale-95"
+                                 >
+                                     Excellent, proceed
+                                 </button>
+                             </div>
+                         </div>
+                     </div>
+                 )}
+
                  <div className="flex items-center justify-between">
                     <div>
                         <h2 className="text-2xl font-bold text-slate-900">User Management</h2>
@@ -642,23 +601,9 @@
                     </div>
                     
                     <div className="flex space-x-3">
-                         <label className="flex items-center px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 cursor-pointer shadow-sm transition-colors">
-                            <Upload className="w-4 h-4 mr-2 text-slate-500" />
-                            Import Data
-                            <input type="file" accept=".json" onChange={handleImportData} className="hidden" />
-                        </label>
-
-                         <button 
-                            onClick={handleExportData}
-                            className="flex items-center px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm transition-colors"
-                        >
-                            <Download className="w-4 h-4 mr-2 text-slate-500" />
-                            Export Data
-                        </button>
-                        
                         {view === 'list' && (
                             <button 
-                                onClick={() => { setEditingUser(null); setFormData({ username: '', password: '', role: UserRole.TEACHER }); setView('form'); }}
+                                onClick={() => { setEditingUser(null); setFormData({ username: '', password: '', email: '', role: UserRole.TEACHER }); setView('form'); }}
                                 className="flex items-center px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 shadow-sm transition-colors text-sm font-medium"
                             >
                                 <UserPlus className="w-4 h-4 mr-2" />
@@ -673,7 +618,8 @@
                         <table className="min-w-full divide-y divide-slate-200">
                             <thead className="bg-slate-50">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Username</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">User</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Email</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Role</th>
                                     <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
                                 </tr>
@@ -681,7 +627,15 @@
                             <tbody className="bg-white divide-y divide-slate-200">
                                 {users.map(user => (
                                     <tr key={user.id} className="hover:bg-slate-50 transition-colors">
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">{user.username}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="flex items-center">
+                                                <div className="w-8 h-8 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-bold text-xs mr-3">
+                                                    {user.username.charAt(0).toUpperCase()}
+                                                </div>
+                                                <span className="text-sm font-medium text-slate-900">{user.username}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 italic">{user.email || 'No email provided'}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                                                 user.role === UserRole.SUPERUSER ? 'bg-purple-100 text-purple-800' :
@@ -696,7 +650,7 @@
                                                  <button 
                                                     type="button"
                                                     onClick={() => handleEdit(user)}
-                                                    className="text-brand-600 hover:text-brand-900 transition-colors"
+                                                    className="text-brand-600 hover:text-brand-900 transition-colors p-1"
                                                 >
                                                     <Edit2 className="w-4 h-4" />
                                                 </button>
@@ -704,7 +658,7 @@
                                                     <button 
                                                         type="button"
                                                         onClick={(e) => handleDelete(e, user.id)}
-                                                        className="text-red-600 hover:text-red-900 transition-colors"
+                                                        className="text-red-600 hover:text-red-900 transition-colors p-1"
                                                     >
                                                         <Trash2 className="w-4 h-4" />
                                                     </button>
@@ -717,54 +671,79 @@
                         </table>
                      </div>
                 ) : (
-                    <div className="bg-white border border-slate-200 rounded-lg shadow-sm p-6 max-w-2xl">
-                         <h3 className="text-lg font-bold text-slate-900 mb-4">{editingUser ? 'Edit User' : 'Create New User'}</h3>
-                         <form onSubmit={handleSave} className="space-y-4">
-                             <div>
-                                 <label className="block text-sm font-medium text-slate-700 mb-1">Username</label>
-                                 <input 
-                                    type="text" 
-                                    required 
-                                    value={formData.username}
-                                    onChange={e => setFormData({...formData, username: e.target.value})}
-                                    className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-brand-500 focus:border-brand-500"
-                                 />
+                    <div className="bg-white border border-slate-200 rounded-lg shadow-sm p-8 max-w-2xl mx-auto">
+                         <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center">
+                             <UserPlus className="w-5 h-5 mr-3 text-brand-600" />
+                             {editingUser ? 'Edit User' : 'Create New User'}
+                         </h3>
+                         <form onSubmit={handleSave} className="space-y-5">
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                 <div>
+                                     <label className="block text-sm font-semibold text-slate-700 mb-1.5">Username</label>
+                                     <input 
+                                        type="text" 
+                                        required 
+                                        value={formData.username}
+                                        onChange={e => setFormData({...formData, username: e.target.value})}
+                                        className="block w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-brand-500 focus:border-brand-500 bg-slate-50 transition-all"
+                                        placeholder="e.g. jdoe"
+                                     />
+                                 </div>
+                                 <div>
+                                     <label className="block text-sm font-semibold text-slate-700 mb-1.5">Initial Password</label>
+                                     <input 
+                                        type="text" 
+                                        required 
+                                        value={formData.password}
+                                        onChange={e => setFormData({...formData, password: e.target.value})}
+                                        className="block w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-brand-500 focus:border-brand-500 bg-slate-50 transition-all"
+                                        placeholder="••••••••"
+                                     />
+                                 </div>
                              </div>
                              <div>
-                                 <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
-                                 <input 
-                                    type="text" 
-                                    required 
-                                    value={formData.password}
-                                    onChange={e => setFormData({...formData, password: e.target.value})}
-                                    className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-brand-500 focus:border-brand-500"
-                                 />
+                                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">Email Address</label>
+                                 <div className="relative">
+                                     <Mail className="absolute left-3 top-3 w-5 h-5 text-slate-400" />
+                                     <input 
+                                        type="email" 
+                                        required 
+                                        value={formData.email}
+                                        onChange={e => setFormData({...formData, email: e.target.value})}
+                                        className="block w-full pl-11 pr-4 py-2.5 border border-slate-300 rounded-xl focus:ring-brand-500 focus:border-brand-500 bg-slate-50 transition-all"
+                                        placeholder="user@example.com"
+                                     />
+                                 </div>
+                                 <p className="mt-1.5 text-xs text-slate-400 flex items-center">
+                                     <Info className="w-3 h-3 mr-1" /> Login credentials will be automatically sent to this address.
+                                 </p>
                              </div>
                              <div>
-                                 <label className="block text-sm font-medium text-slate-700 mb-1">Role</label>
+                                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">Access Role</label>
                                  <select 
                                     value={formData.role}
                                     onChange={e => setFormData({...formData, role: e.target.value})}
-                                    className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-brand-500 focus:border-brand-500"
+                                    className="block w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-brand-500 focus:border-brand-500 bg-slate-50 transition-all appearance-none"
                                  >
                                      {Object.values(UserRole).map(role => (
                                          <option key={role} value={role}>{role}</option>
                                      ))}
                                  </select>
                              </div>
-                             <div className="flex justify-end space-x-3 pt-4">
+                             <div className="flex justify-end space-x-3 pt-6 border-t border-slate-100">
                                  <button 
                                     type="button"
                                     onClick={() => setView('list')}
-                                    className="px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                                    className="px-6 py-2.5 text-sm font-bold text-slate-600 hover:text-slate-900 transition-colors"
                                  >
                                      Cancel
                                  </button>
                                  <button 
                                     type="submit"
-                                    className="px-4 py-2 bg-brand-600 border border-transparent rounded-lg text-sm font-medium text-white hover:bg-brand-700 transition-colors"
+                                    className="px-8 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl transition-all shadow-md flex items-center"
                                  >
-                                     Save User
+                                     <Send className="w-4 h-4 mr-2" />
+                                     {editingUser ? 'Update Account' : 'Create & Send Email'}
                                  </button>
                              </div>
                          </form>
@@ -774,15 +753,9 @@
         );
       };
 
-      // 4. BackupRestore
       const BackupRestore = ({ users, courses, setUsers, setCourses }) => {
         const handleExportData = () => {
-            const data = {
-                users,
-                courses,
-                exportDate: new Date().toISOString(),
-                version: "1.0"
-            };
+            const data = { users, courses, exportDate: new Date().toISOString(), version: "1.0" };
             const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -797,31 +770,19 @@
         const handleImportData = (e) => {
             const file = e.target.files[0];
             if (!file) return;
-
             if (!window.confirm("WARNING: Importing data will completely overwrite all current users, courses, and student records. This action cannot be undone. Are you sure?")) {
                 e.target.value = null; 
                 return;
             }
-
             const reader = new FileReader();
             reader.onload = (event) => {
                 try {
                     const data = JSON.parse(event.target.result);
-                    let importedUsers = 0;
-                    let importedCourses = 0;
-
-                    if (data.users && Array.isArray(data.users)) {
-                        setUsers(data.users);
-                        importedUsers = data.users.length;
-                    }
-                    if (data.courses && Array.isArray(data.courses)) {
-                        setCourses(data.courses);
-                        importedCourses = data.courses.length;
-                    }
-                    alert(`Backup restored successfully!\n- ${importedUsers} Users updated\n- ${importedCourses} Courses updated`);
+                    if (data.users && Array.isArray(data.users)) setUsers(data.users);
+                    if (data.courses && Array.isArray(data.courses)) setCourses(data.courses);
+                    alert("Backup restored successfully!");
                 } catch (error) {
-                    console.error("Import error:", error);
-                    alert("Failed to import data. The file appears to be corrupted or invalid.");
+                    alert("Failed to import data. Invalid file format.");
                 }
             };
             reader.readAsText(file);
@@ -834,144 +795,62 @@
                     <h2 className="text-2xl font-bold text-slate-900">System Backup & Restore</h2>
                     <p className="text-slate-500">Securely export your data or restore from a previous backup.</p>
                 </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Export Card */}
                     <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-6 flex flex-col items-center text-center space-y-4">
                         <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center text-brand-600 mb-2">
                             <Download className="w-8 h-8" />
                         </div>
                         <h3 className="text-lg font-bold text-slate-900">Export Database</h3>
-                        <p className="text-sm text-slate-500 px-4">
-                            Download a full JSON backup of all courses, students, grades, and user accounts.
-                        </p>
-                        <button 
-                            onClick={handleExportData}
-                            className="mt-4 w-full py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-lg shadow-sm transition-colors flex items-center justify-center"
-                        >
-                            <Download className="w-4 h-4 mr-2" />
-                            Download Backup
+                        <p className="text-sm text-slate-500 px-4">Download a full JSON backup of all data.</p>
+                        <button onClick={handleExportData} className="mt-4 w-full py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-lg shadow-sm transition-colors flex items-center justify-center">
+                            <Download className="w-4 h-4 mr-2" /> Download Backup
                         </button>
                     </div>
-
-                    {/* Import Card */}
                     <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-6 flex flex-col items-center text-center space-y-4">
                          <div className="w-16 h-16 bg-purple-50 rounded-full flex items-center justify-center text-purple-600 mb-2">
                             <Upload className="w-8 h-8" />
                         </div>
                         <h3 className="text-lg font-bold text-slate-900">Restore Database</h3>
-                        <p className="text-sm text-slate-500 px-4">
-                            Upload a previously exported JSON file to restore the system to that state.
-                        </p>
+                        <p className="text-sm text-slate-500 px-4">Upload a JSON file to restore the system.</p>
                         <label className="mt-4 w-full py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-medium rounded-lg shadow-sm transition-colors cursor-pointer flex items-center justify-center">
-                            <Upload className="w-4 h-4 mr-2" />
-                            Select Backup File
+                            <Upload className="w-4 h-4 mr-2" /> Select Backup File
                             <input type="file" accept=".json" onChange={handleImportData} className="hidden" />
                         </label>
-                    </div>
-                </div>
-
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start">
-                    <ShieldAlert className="w-5 h-5 text-amber-600 mt-0.5 mr-3 flex-shrink-0" />
-                    <div>
-                        <h4 className="text-sm font-bold text-amber-800">Important Note</h4>
-                        <p className="text-sm text-amber-700 mt-1">
-                            Restoring a backup is a destructive action. Any data created since the backup was taken will be lost. Ensure you have exported your current data before restoring if you wish to save it.
-                        </p>
                     </div>
                 </div>
             </div>
         );
       };
 
-      // 5. CourseManager
       const CourseManager = ({ courses, onUpdate, onCreate, onDelete, currentUser }) => {
         const [view, setView] = useState('list');
         const [editingCourse, setEditingCourse] = useState(null);
-        const [formData, setFormData] = useState({
-            title: '',
-            year: '2025-26',
-            subject: Subject.ESPORTS,
-            qualification: QualificationType.EXTENDED_DIPLOMA,
-            units: []
-        });
-
-        // Determine permissions
+        const [formData, setFormData] = useState({ title: '', year: '2025-26', subject: Subject.ESPORTS, qualification: QualificationType.EXTENDED_DIPLOMA, units: [] });
         const isEditor = currentUser.role === UserRole.ADMIN || currentUser.role === UserRole.SUPERUSER || currentUser.role === UserRole.TEACHER;
         const isSuperuser = currentUser.role === UserRole.SUPERUSER;
 
         const handleCreate = () => {
             setEditingCourse(null);
-            // Default units based on subject with unique IDs
             let defaultUnits = SAMPLE_UNITS_ESPORTS.map(u => ({...u, id: generateId()}));
             if (formData.subject === Subject.IT) defaultUnits = SAMPLE_UNITS_IT.map(u => ({...u, id: generateId()}));
             if (formData.subject === Subject.ICT_L2) defaultUnits = SAMPLE_UNITS_ICT_L2.map(u => ({...u, id: generateId()}));
             if (formData.subject === Subject.VOCATIONAL_L1) defaultUnits = SAMPLE_UNITS_VOC_L1.map(u => ({...u, id: generateId()}));
-            
-            setFormData({
-                title: '',
-                year: '2025-26',
-                subject: Subject.ESPORTS,
-                qualification: QualificationType.EXTENDED_DIPLOMA,
-                units: sortUnits([...defaultUnits])
-            });
+            setFormData({ title: '', year: '2025-26', subject: Subject.ESPORTS, qualification: QualificationType.EXTENDED_DIPLOMA, units: sortUnits([...defaultUnits]) });
             setView('form');
         };
 
         const handleEdit = (course) => {
             setEditingCourse(course);
-            setFormData({
-                title: course.title,
-                year: course.academicYear,
-                subject: course.subject,
-                qualification: course.qualification,
-                units: sortUnits(course.units)
-            });
+            setFormData({ title: course.title, year: course.academicYear, subject: course.subject, qualification: course.qualification, units: sortUnits(course.units) });
             setView('form');
-        };
-
-        const handleDelete = (e, courseId) => {
-            // CRITICAL: Stop propagation to prevent row click
-            e.stopPropagation();
-            // Prevent default button behavior
-            e.preventDefault();
-
-            // Direct confirm without setTimeout logic
-            if (window.confirm("Are you sure you want to delete this course? This cannot be undone.")) {
-                onDelete(courseId);
-            }
         };
 
         const handleSave = (e) => {
             e.preventDefault();
-            const courseData = {
-                title: formData.title || `${formData.year} ${formData.subject}`,
-                academicYear: formData.year,
-                subject: formData.subject,
-                qualification: formData.qualification,
-                units: formData.units
-            };
-
-            if (editingCourse) {
-                onUpdate(editingCourse.id, courseData);
-            } else {
-                onCreate(courseData);
-            }
+            const courseData = { title: formData.title || `${formData.year} ${formData.subject}`, academicYear: formData.year, subject: formData.subject, qualification: formData.qualification, units: formData.units };
+            if (editingCourse) onUpdate(editingCourse.id, courseData);
+            else onCreate(courseData);
             setView('list');
-        };
-
-        const toggleUnitType = (index) => {
-             const newUnits = formData.units.map((u, i) => 
-                i === index ? { ...u, type: u.type === UnitType.INTERNAL ? UnitType.EXTERNAL : UnitType.INTERNAL } : u
-             );
-             setFormData({...formData, units: newUnits});
-        };
-
-        const updateUnitGLH = (index, glh) => {
-             const newUnits = formData.units.map((u, i) => 
-                i === index ? { ...u, glh: parseInt(glh) } : u
-             );
-             setFormData({...formData, units: newUnits});
         };
 
         if (view === 'list') {
@@ -982,17 +861,8 @@
                             <h2 className="text-2xl font-bold text-slate-900">Course Builder</h2>
                             <p className="text-slate-500">Create and manage your course specifications.</p>
                         </div>
-                        {isEditor && (
-                            <button 
-                                onClick={handleCreate}
-                                className="flex items-center px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 shadow-sm transition-colors text-sm font-medium"
-                            >
-                                <Plus className="w-4 h-4 mr-2" />
-                                Create New Course
-                            </button>
-                        )}
+                        {isEditor && <button onClick={handleCreate} className="flex items-center px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 shadow-sm transition-colors text-sm font-medium"><Plus className="w-4 h-4 mr-2" /> Create New Course</button>}
                     </div>
-
                     <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
                         <table className="min-w-full divide-y divide-slate-200">
                             <thead className="bg-slate-50">
@@ -1000,7 +870,6 @@
                                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Course Name</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Year</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Subject</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Units</th>
                                     {isEditor && <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>}
                                 </tr>
                             </thead>
@@ -1012,44 +881,17 @@
                                             <div className="text-xs text-slate-500">{course.qualification}</div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{course.academicYear}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-800 border border-slate-200">
-                                                {course.subject}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{course.units.length} Units</td>
+                                        <td className="px-6 py-4 whitespace-nowrap"><span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-800 border border-slate-200">{course.subject}</span></td>
                                         {isEditor && (
                                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                 <div className="flex items-center justify-end space-x-3">
-                                                    <button 
-                                                        type="button"
-                                                        onClick={() => handleEdit(course)}
-                                                        className="text-slate-400 hover:text-brand-600 transition-colors"
-                                                    >
-                                                        <Edit2 className="w-4 h-4" />
-                                                    </button>
-                                                    {isSuperuser && (
-                                                        <button 
-                                                            type="button"
-                                                            onClick={(e) => handleDelete(e, course.id)}
-                                                            className="text-slate-400 hover:text-red-600 transition-colors"
-                                                            title="Delete Course"
-                                                        >
-                                                            <X className="w-4 h-4 pointer-events-none" />
-                                                        </button>
-                                                    )}
+                                                    <button onClick={() => handleEdit(course)} className="text-slate-400 hover:text-brand-600 transition-colors"><Edit2 className="w-4 h-4" /></button>
+                                                    {isSuperuser && <button onClick={(e) => { e.stopPropagation(); if (window.confirm("Delete?")) onDelete(course.id); }} className="text-slate-400 hover:text-red-600 transition-colors"><X className="w-4 h-4" /></button>}
                                                 </div>
                                             </td>
                                         )}
                                     </tr>
                                 ))}
-                                {courses.length === 0 && (
-                                    <tr>
-                                        <td colSpan="5" className="px-6 py-12 text-center text-slate-500">
-                                            No courses found. Click "Create New Course" to get started.
-                                        </td>
-                                    </tr>
-                                )}
                             </tbody>
                         </table>
                     </div>
@@ -1059,327 +901,85 @@
 
         return (
             <div className="max-w-4xl mx-auto">
-                <button onClick={() => setView('list')} className="flex items-center text-slate-500 hover:text-slate-900 mb-6 transition-colors">
-                    <ArrowLeft className="w-4 h-4 mr-1" /> Back to Courses
-                </button>
-
+                <button onClick={() => setView('list')} className="flex items-center text-slate-500 hover:text-slate-900 mb-6 transition-colors"><ArrowLeft className="w-4 h-4 mr-1" /> Back to Courses</button>
                 <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-8">
                     <h2 className="text-2xl font-bold text-slate-900 mb-6">{editingCourse ? 'Edit Course' : 'Create New Course'}</h2>
-                    
                     <form onSubmit={handleSave} className="space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Course Title</label>
-                                <input
-                                    type="text"
-                                    value={formData.title}
-                                    onChange={e => setFormData({...formData, title: e.target.value})}
-                                    placeholder="e.g. Year 12 Esports Group A"
-                                    className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-brand-500 focus:border-brand-500"
-                                    required
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Academic Year</label>
-                                <input
-                                    type="text"
-                                    value={formData.year}
-                                    onChange={e => setFormData({...formData, year: e.target.value})}
-                                    className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-brand-500 focus:border-brand-500"
-                                    required
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Subject</label>
-                                <select
-                                    value={formData.subject}
-                                    onChange={e => {
-                                        const newSubject = e.target.value;
-                                        // Ensure units get new unique IDs when subject changes
-                                        let newUnits = SAMPLE_UNITS_ESPORTS.map(u => ({...u, id: generateId()}));
-                                        if (newSubject === Subject.IT) newUnits = SAMPLE_UNITS_IT.map(u => ({...u, id: generateId()}));
-                                        if (newSubject === Subject.ICT_L2) newUnits = SAMPLE_UNITS_ICT_L2.map(u => ({...u, id: generateId()}));
-                                        if (newSubject === Subject.VOCATIONAL_L1) newUnits = SAMPLE_UNITS_VOC_L1.map(u => ({...u, id: generateId()}));
-                                        
-                                        // Auto-select a typical qualification for the subject
-                                        let newQual = formData.qualification;
-                                        if (newSubject === Subject.ICT_L2) newQual = QualificationType.L2_EXTENDED_CERTIFICATE;
-                                        if (newSubject === Subject.VOCATIONAL_L1) newQual = QualificationType.L1_INTRO_DIPLOMA;
-                                        if (newSubject === Subject.ESPORTS || newSubject === Subject.IT) newQual = QualificationType.EXTENDED_DIPLOMA;
-
-                                        setFormData({
-                                            ...formData, 
-                                            subject: newSubject,
-                                            units: sortUnits(newUnits),
-                                            qualification: newQual
-                                        });
-                                    }}
-                                    className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-brand-500 focus:border-brand-500"
-                                >
-                                    {Object.values(Subject).map(s => <option key={s} value={s}>{s}</option>)}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Qualification Size</label>
-                                <select
-                                    value={formData.qualification}
-                                    onChange={e => setFormData({...formData, qualification: e.target.value})}
-                                    className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-brand-500 focus:border-brand-500"
-                                >
-                                    {Object.values(QualificationType).map(q => <option key={q} value={q}>{q}</option>)}
-                                </select>
-                            </div>
+                             <div><label className="block text-sm font-medium text-slate-700 mb-1">Course Title</label><input type="text" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-brand-500" required /></div>
+                             <div><label className="block text-sm font-medium text-slate-700 mb-1">Academic Year</label><input type="text" value={formData.year} onChange={e => setFormData({...formData, year: e.target.value})} className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-brand-500" required /></div>
+                             <div><label className="block text-sm font-medium text-slate-700 mb-1">Subject</label><select value={formData.subject} onChange={e => setFormData({...formData, subject: e.target.value})} className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-brand-500">{Object.values(Subject).map(s => <option key={s} value={s}>{s}</option>)}</select></div>
+                             <div><label className="block text-sm font-medium text-slate-700 mb-1">Qualification Size</label><select value={formData.qualification} onChange={e => setFormData({...formData, qualification: e.target.value})} className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-brand-500">{Object.values(QualificationType).map(q => <option key={q} value={q}>{q}</option>)}</select></div>
                         </div>
-
-                        <div className="pt-6 border-t border-slate-200">
-                             <div className="flex justify-between items-center mb-4">
-                                <h3 className="text-lg font-bold text-slate-900">Units</h3>
-                                <button
-                                    type="button"
-                                    onClick={() => setFormData({...formData, units: [...formData.units, { id: generateId(), name: 'New Unit', glh: 60, type: UnitType.INTERNAL }]})}
-                                    className="text-sm text-brand-600 font-medium hover:text-brand-700 flex items-center"
-                                >
-                                    <Plus className="w-4 h-4 mr-1" /> Add Unit
-                                </button>
-                            </div>
-                            
-                            <div className="space-y-3">
-                                {formData.units.map((unit, idx) => (
-                                    <div key={idx} className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg">
-                                        <div className="flex-1">
-                                            <input
-                                                type="text"
-                                                value={unit.name}
-                                                onChange={e => {
-                                                    const newUnits = formData.units.map((u, i) => 
-                                                        i === idx ? { ...u, name: e.target.value } : u
-                                                    );
-                                                    setFormData({...formData, units: newUnits});
-                                                }}
-                                                className="block w-full px-2 py-1 text-sm border-transparent bg-transparent focus:border-slate-300 focus:bg-white rounded hover:bg-white transition-colors"
-                                            />
-                                        </div>
-                                        <select
-                                            value={unit.glh}
-                                            onChange={e => updateUnitGLH(idx, e.target.value)}
-                                            className="block w-24 px-2 py-1 text-xs border border-slate-200 rounded bg-white"
-                                        >
-                                            <option value="30">30 GLH</option>
-                                            <option value="60">60 GLH</option>
-                                            <option value="90">90 GLH</option>
-                                            <option value="120">120 GLH</option>
-                                        </select>
-                                        <button
-                                            type="button"
-                                            onClick={() => toggleUnitType(idx)}
-                                            className={`px-3 py-1 rounded text-xs font-medium w-24 text-center transition-colors ${
-                                                unit.type === UnitType.INTERNAL 
-                                                ? 'bg-blue-100 text-blue-700 hover:bg-blue-200' 
-                                                : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
-                                            }`}
-                                        >
-                                            {unit.type}
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                const newUnits = formData.units.filter((_, i) => i !== idx);
-                                                setFormData({...formData, units: newUnits});
-                                            }}
-                                            className="text-slate-400 hover:text-red-500 p-1"
-                                        >
-                                            <X className="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="flex justify-end pt-6">
-                            <button
-                                type="submit"
-                                className="px-6 py-2 bg-brand-600 text-white font-medium rounded-lg hover:bg-brand-700 shadow-sm transition-colors flex items-center"
-                            >
-                                <Save className="w-4 h-4 mr-2" />
-                                Save Course
-                            </button>
-                        </div>
+                        <div className="flex justify-end pt-6"><button type="submit" className="px-6 py-2 bg-brand-600 text-white font-medium rounded-lg hover:bg-brand-700 shadow-sm transition-colors flex items-center"><Save className="w-4 h-4 mr-2" /> Save Course</button></div>
                     </form>
                 </div>
             </div>
         );
       };
 
-      // 6. StudentManager
       const StudentManager = ({ course, onBack, onUpdateCourse, currentUser }) => {
         const [view, setView] = useState('list');
         const [activeStudent, setActiveStudent] = useState(null);
         const [showAddStudentModal, setShowAddStudentModal] = useState(false);
         const [newStudentName, setNewStudentName] = useState('');
-        
-        // Permissions
         const isAdmin = currentUser.role === UserRole.ADMIN || currentUser.role === UserRole.SUPERUSER;
-        // Allow teachers to manage students (add/remove/edit)
         const canManageStudents = isAdmin || currentUser.role === UserRole.TEACHER;
-        
-        const canLock = currentUser.role === UserRole.TEACHER || isAdmin;
         const canUnlock = isAdmin;
 
         const handleAddStudentSubmit = (e) => {
              e.preventDefault();
              if (newStudentName.trim()) {
                  const newStudent = { id: generateId(), name: newStudentName.trim(), grades: {} };
-                 const currentStudents = course.students || [];
-                 const updatedStudents = [...currentStudents, newStudent];
-                 onUpdateCourse(course.id, { students: updatedStudents });
+                 onUpdateCourse(course.id, { students: [...(course.students || []), newStudent] });
                  setNewStudentName('');
                  setShowAddStudentModal(false);
              }
         };
 
-        const handleDeleteStudent = (e, studentId) => {
-            e.stopPropagation();
-            if (window.confirm("Remove this student?")) {
-                const updatedStudents = course.students.filter(s => s.id !== studentId);
-                onUpdateCourse(course.id, { students: updatedStudents });
-            }
-        };
-
         const handleGradeChange = (unitId, grade) => {
             if (!activeStudent) return;
-            const currentGrades = activeStudent.grades || {};
-            const updatedGrades = { ...currentGrades, [unitId]: grade };
-            const updatedStudent = { ...activeStudent, grades: updatedGrades };
-            
-            // Optimistic update local state
+            const updatedStudent = { ...activeStudent, grades: { ...activeStudent.grades, [unitId]: grade } };
             setActiveStudent(updatedStudent);
-            
-            // Persist
-            const updatedStudents = course.students.map(s => s.id === activeStudent.id ? updatedStudent : s);
-            onUpdateCourse(course.id, { students: updatedStudents });
+            onUpdateCourse(course.id, { students: course.students.map(s => s.id === activeStudent.id ? updatedStudent : s) });
         };
 
         const toggleLock = (unitId) => {
             if (!activeStudent) return;
-            const currentLockState = activeStudent.lockedGrades?.[unitId] || false;
-            
-            if (currentLockState && !canUnlock) {
-                alert("Only Administrators can unlock a grade once it has been verified.");
-                return;
-            }
-
-            const newLockState = !currentLockState;
-            const updatedLocked = { ...(activeStudent.lockedGrades || {}), [unitId]: newLockState };
-            const updatedStudent = { ...activeStudent, lockedGrades: updatedLocked };
-            
+            const currentLock = activeStudent.lockedGrades?.[unitId] || false;
+            if (currentLock && !canUnlock) { alert("Admins only."); return; }
+            const updatedStudent = { ...activeStudent, lockedGrades: { ...(activeStudent.lockedGrades || {}), [unitId]: !currentLock } };
             setActiveStudent(updatedStudent);
-            const updatedStudents = course.students.map(s => s.id === activeStudent.id ? updatedStudent : s);
-            onUpdateCourse(course.id, { students: updatedStudents });
+            onUpdateCourse(course.id, { students: course.students.map(s => s.id === activeStudent.id ? updatedStudent : s) });
         };
 
-        const handleUpdateName = (name) => {
-             if (!activeStudent) return;
-             const updatedStudent = { ...activeStudent, name };
-             setActiveStudent(updatedStudent);
-             const updatedStudents = course.students.map(s => s.id === activeStudent.id ? updatedStudent : s);
-             onUpdateCourse(course.id, { students: updatedStudents });
-        };
-
-        // Editor View
         if (view === 'editor' && activeStudent) {
             const unitsWithGrades = mergeUnitsAndGrades(course.units, activeStudent.grades, activeStudent.lockedGrades);
             const sortedUnits = sortUnits(unitsWithGrades);
             const results = calculateQualification(unitsWithGrades, course.qualification);
             const availableGrades = getAvailableGrades(course.qualification);
-
             return (
                 <div className="flex flex-col h-[calc(100vh-100px)]"> 
-                    {/* Fixed Header Section */}
                     <div className="bg-white border-b border-slate-200 shadow-sm z-10 p-4">
                         <div className="max-w-6xl mx-auto w-full">
-                            <div className="flex items-center justify-between mb-4">
-                                <button onClick={() => setView('list')} className="flex items-center text-slate-500 hover:text-slate-900 transition-colors text-sm font-medium">
-                                    <ArrowLeft className="w-4 h-4 mr-1" /> Back to Students
-                                </button>
-                                <div className="text-xs text-slate-400 font-mono">ID: {activeStudent.id.slice(0,8)}</div>
-                            </div>
-
+                            <div className="flex items-center justify-between mb-4"><button onClick={() => setView('list')} className="flex items-center text-slate-500 hover:text-slate-900 transition-colors text-sm font-medium"><ArrowLeft className="w-4 h-4 mr-1" /> Back to Students</button></div>
                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                                <div className="flex-1">
-                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Student Name</label>
-                                    {canManageStudents ? (
-                                        <input 
-                                            type="text" 
-                                            value={activeStudent.name}
-                                            onChange={(e) => handleUpdateName(e.target.value)}
-                                            className="text-2xl font-bold text-slate-900 border-none bg-transparent p-0 focus:ring-0 placeholder-slate-300 w-full"
-                                        />
-                                    ) : (
-                                        <div className="text-2xl font-bold text-slate-900">{activeStudent.name}</div>
-                                    )}
-                                </div>
-                                
+                                <div className="flex-1"><label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Student Name</label><div className="text-2xl font-bold text-slate-900">{activeStudent.name}</div></div>
                                 <ResultsPanel results={results} variant="compact" />
                             </div>
                         </div>
                     </div>
-
-                    {/* Scrollable Content */}
                     <div className="flex-1 overflow-y-auto bg-slate-50 p-6">
                          <div className="max-w-6xl mx-auto">
                             <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
                                 <table className="min-w-full divide-y divide-slate-200">
-                                    <thead className="bg-slate-50 sticky top-0">
-                                        <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-1/2">Unit</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Type</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">GLH</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Grade</th>
-                                            <th className="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Lock</th>
-                                        </tr>
-                                    </thead>
+                                    <thead className="bg-slate-50 sticky top-0"><tr><th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Unit</th><th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Grade</th><th className="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Lock</th></tr></thead>
                                     <tbody className="bg-white divide-y divide-slate-200">
                                         {sortedUnits.map((unit) => (
                                             <tr key={unit.id} className="hover:bg-slate-50 transition-colors">
-                                                <td className="px-6 py-4">
-                                                    <div className="text-sm font-medium text-slate-900">{unit.name}</div>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                                        unit.type === UnitType.INTERNAL ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'
-                                                    }`}>
-                                                        {unit.type}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{unit.glh}</td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <select
-                                                        value={unit.grade}
-                                                        onChange={(e) => handleGradeChange(unit.id, e.target.value)}
-                                                        disabled={unit.isLocked}
-                                                        className={`block w-full pl-3 pr-10 py-1 text-sm border-slate-300 focus:outline-none focus:ring-brand-500 focus:border-brand-500 sm:text-sm rounded-md ${
-                                                            unit.isLocked ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-white'
-                                                        }`}
-                                                    >
-                                                        {availableGrades.map((g) => {
-                                                            return <option key={g} value={g}>{g}</option>;
-                                                        })}
-                                                    </select>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                    <button
-                                                        onClick={() => toggleLock(unit.id)}
-                                                        disabled={unit.isLocked && !canUnlock}
-                                                        title={unit.isLocked ? (canUnlock ? "Unlock Grade" : "Locked by Admin") : "Lock Grade"}
-                                                        className={`p-1.5 rounded-md transition-colors ${
-                                                            unit.isLocked 
-                                                                ? 'text-brand-600 bg-brand-50' 
-                                                                : 'text-slate-300 hover:text-slate-500'
-                                                        } ${unit.isLocked && !canUnlock ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                    >
-                                                        {unit.isLocked ? <Lock className="w-4 h-4" /> : <div className="w-4 h-4 border-2 border-slate-300 rounded sm:mr-0" />}
-                                                    </button>
-                                                </td>
+                                                <td className="px-6 py-4"><div className="text-sm font-medium text-slate-900">{unit.name}</div><div className="text-xs text-slate-500">{unit.type} &bull; {unit.glh} GLH</div></td>
+                                                <td className="px-6 py-4 whitespace-nowrap"><select value={unit.grade} onChange={(e) => handleGradeChange(unit.id, e.target.value)} disabled={unit.isLocked} className="block w-full pl-3 pr-10 py-1 text-sm border-slate-300 rounded-md disabled:bg-slate-50">{availableGrades.map((g) => <option key={g} value={g}>{g}</option>)}</select></td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-center"><button onClick={() => toggleLock(unit.id)} disabled={unit.isLocked && !canUnlock} className={`p-1.5 rounded-md ${unit.isLocked ? 'text-brand-600 bg-brand-50' : 'text-slate-300'}`}>{unit.isLocked ? <Lock className="w-4 h-4" /> : <div className="w-4 h-4 border-2 border-slate-300 rounded" />}</button></td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -1391,470 +991,110 @@
             );
         }
 
-        // List View
         return (
             <div className="space-y-6 relative">
-                 {/* Add Student Modal */}
                  {showAddStudentModal && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
                         <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
                             <h3 className="text-lg font-bold text-slate-900 mb-4">Add New Student</h3>
                             <form onSubmit={handleAddStudentSubmit}>
-                                <div className="mb-4">
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
-                                    <input 
-                                        type="text" 
-                                        autoFocus
-                                        required
-                                        value={newStudentName}
-                                        onChange={(e) => setNewStudentName(e.target.value)}
-                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-brand-500 focus:border-brand-500 outline-none"
-                                        placeholder="e.g. John Doe"
-                                    />
-                                </div>
-                                <div className="flex justify-end space-x-3">
-                                    <button 
-                                        type="button"
-                                        onClick={() => setShowAddStudentModal(false)}
-                                        className="px-4 py-2 text-slate-700 hover:bg-slate-100 rounded-lg font-medium transition-colors"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button 
-                                        type="submit"
-                                        className="px-4 py-2 bg-brand-600 text-white hover:bg-brand-700 rounded-lg font-medium transition-colors"
-                                    >
-                                        Add Student
-                                    </button>
-                                </div>
+                                <div className="mb-4"><label className="block text-sm font-medium text-slate-700 mb-1">Full Name</label><input type="text" autoFocus required value={newStudentName} onChange={(e) => setNewStudentName(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg" placeholder="John Doe" /></div>
+                                <div className="flex justify-end space-x-3"><button type="button" onClick={() => setShowAddStudentModal(false)} className="px-4 py-2 text-slate-700 hover:bg-slate-100 rounded-lg">Cancel</button><button type="submit" className="px-4 py-2 bg-brand-600 text-white hover:bg-brand-700 rounded-lg">Add Student</button></div>
                             </form>
                         </div>
                     </div>
                  )}
-
-                <div className="flex items-center justify-between">
-                    <button onClick={onBack} className="flex items-center text-slate-500 hover:text-slate-900 transition-colors">
-                        <ArrowLeft className="w-4 h-4 mr-1" /> Back to Dashboard
-                    </button>
+                <div className="flex items-center justify-between"><button onClick={onBack} className="flex items-center text-slate-500 hover:text-slate-900 transition-colors"><ArrowLeft className="w-4 h-4 mr-1" /> Back to Dashboard</button></div>
+                <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-6 mb-6 flex justify-between items-start">
+                    <div><h2 className="text-2xl font-bold text-slate-900 mb-1">{course.title}</h2><p className="text-sm text-slate-500">{course.subject} &bull; {course.qualification}</p></div>
+                    {canManageStudents && <button onClick={() => setShowAddStudentModal(true)} className="flex items-center px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 text-sm font-medium"><UserPlus className="w-4 h-4 mr-2" /> Add Student</button>}
                 </div>
-
-                <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-6 mb-6">
-                    <div className="flex justify-between items-start">
-                        <div>
-                             <h2 className="text-2xl font-bold text-slate-900 mb-1">{course.title}</h2>
-                             <div className="flex items-center space-x-4 text-sm text-slate-500">
-                                <span className="flex items-center"><Book className="w-4 h-4 mr-1" /> {course.subject}</span>
-                                <span className="flex items-center"><Calendar className="w-4 h-4 mr-1" /> {course.academicYear}</span>
-                                <span className="flex items-center"><ShieldCheck className="w-4 h-4 mr-1" /> {course.qualification}</span>
-                             </div>
-                        </div>
-                        {canManageStudents && (
-                            <button 
-                                onClick={() => setShowAddStudentModal(true)}
-                                className="flex items-center px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 shadow-sm transition-colors text-sm font-medium"
-                            >
-                                <UserPlus className="w-4 h-4 mr-2" />
-                                Add Student
-                            </button>
-                        )}
-                    </div>
-                </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {(course.students || []).map(student => {
-                        const unitsWithGrades = mergeUnitsAndGrades(course.units, student.grades);
-                        const results = calculateQualification(unitsWithGrades, course.qualification);
-                        
-                        return (
-                            <div 
-                                key={student.id} 
-                                onClick={() => { setActiveStudent(student); setView('editor'); }}
-                                className="group bg-white border border-slate-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-all cursor-pointer relative overflow-hidden border-l-4 border-l-brand-500"
-                            >
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className="flex items-center space-x-3">
-                                        <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-bold">
-                                            {student.name.charAt(0)}
-                                        </div>
-                                        <div>
-                                            <h3 className="font-bold text-slate-900 group-hover:text-brand-600 transition-colors">{student.name}</h3>
-                                            <p className="text-xs text-slate-500">ID: {student.id.slice(0, 6)}</p>
-                                        </div>
-                                    </div>
-                                    {canManageStudents && (
-                                        <button 
-                                            onClick={(e) => handleDeleteStudent(e, student.id)}
-                                            className="text-slate-300 hover:text-red-500 transition-colors"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
-                                    )}
-                                </div>
-                                
-                                <div className="bg-slate-50 rounded-lg p-3 flex justify-between items-center border border-slate-100">
-                                    <div className="text-center">
-                                        <div className="text-xs text-slate-500 uppercase font-semibold">Current</div>
-                                        <div className="font-bold text-brand-600">{results.grade}</div>
-                                    </div>
-                                    <div className="h-8 w-px bg-slate-200"></div>
-                                    <div className="text-center">
-                                        <div className="text-xs text-slate-500 uppercase font-semibold">Points</div>
-                                        <div className="font-bold text-slate-700">{results.totalPoints}</div>
-                                    </div>
-                                    <div className="h-8 w-px bg-slate-200"></div>
-                                    <div className="text-center">
-                                        <div className="text-xs text-slate-500 uppercase font-semibold">UCAS</div>
-                                        <div className="font-bold text-slate-700">{results.ucasPoints}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    })}
-                    
-                    {(course.students || []).length === 0 && (
-                        <div className="col-span-full py-12 text-center bg-slate-50 border-2 border-dashed border-slate-200 rounded-xl">
-                            <Users className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-                            <h3 className="text-lg font-medium text-slate-900">No Students Yet</h3>
-                            <p className="text-slate-500 mb-4">Add students to this course to start tracking grades.</p>
-                            {canManageStudents && (
-                                <button onClick={() => setShowAddStudentModal(true)} className="text-brand-600 font-medium hover:underline">
-                                    Add your first student
-                                </button>
-                            )}
+                    {(course.students || []).map(student => (
+                        <div key={student.id} onClick={() => { setActiveStudent(student); setView('editor'); }} className="group bg-white border border-slate-200 rounded-xl p-5 shadow-sm hover:shadow-md cursor-pointer border-l-4 border-l-brand-500">
+                            <h3 className="font-bold text-slate-900 group-hover:text-brand-600 mb-3">{student.name}</h3>
+                            <div className="bg-slate-50 rounded-lg p-3 flex justify-between items-center text-xs font-bold text-slate-700"><span>Grade: {calculateQualification(mergeUnitsAndGrades(course.units, student.grades), course.qualification).grade}</span><span>UCAS: {calculateQualification(mergeUnitsAndGrades(course.units, student.grades), course.qualification).ucasPoints}</span></div>
                         </div>
-                    )}
+                    ))}
                 </div>
             </div>
         );
       };
 
-      // 7. App Main
       const App = () => {
-        // Use lazy initialization for state to prevent re-seeding issues
-        const [users, setUsers] = useState(() => [
-            { id: '1', username: 'Frazadmin', password: 'Frazadmin', role: UserRole.SUPERUSER },
-            { id: '2', username: 'admin', password: 'password', role: UserRole.ADMIN },
-            { id: '3', username: 'teacher', password: 'password', role: UserRole.TEACHER },
-        ]);
+        const [users, setUsers] = useState(() => {
+            const saved = localStorage.getItem('gm_users');
+            return saved ? JSON.parse(saved) : [
+                { id: '1', username: 'Frazadmin', password: 'Frazadmin', email: 'admin@grademaster.com', role: UserRole.SUPERUSER },
+                { id: '2', username: 'admin', password: 'password', email: 'admin@school.ac.uk', role: UserRole.ADMIN },
+                { id: '3', username: 'teacher', password: 'password', email: 'teacher@school.ac.uk', role: UserRole.TEACHER },
+            ];
+        });
 
-        const [courses, setCourses] = useState(() => [
-            { 
-                id: '1', 
-                title: 'Year 12 Esports Group A', 
-                academicYear: '2024-25',
-                subject: Subject.ESPORTS, 
-                qualification: QualificationType.EXTENDED_DIPLOMA, 
-                units: sortUnits(SAMPLE_UNITS_ESPORTS.map(u => ({...u, id: generateId()}))),
-                students: []
-            },
-            { 
-                id: '2', 
-                title: 'BTEC Level 2', 
-                academicYear: '2024-25',
-                subject: Subject.IT, 
-                qualification: QualificationType.EXTENDED_DIPLOMA, 
-                units: sortUnits(SAMPLE_UNITS_IT.map(u => ({...u, id: generateId()}))),
-                students: []
-            }
-        ]);
+        const [courses, setCourses] = useState(() => {
+            const saved = localStorage.getItem('gm_courses');
+            return saved ? JSON.parse(saved) : [
+                { id: '1', title: 'Year 12 Esports Group A', academicYear: '2024-25', subject: Subject.ESPORTS, qualification: QualificationType.EXTENDED_DIPLOMA, units: sortUnits(SAMPLE_UNITS_ESPORTS.map(u => ({...u, id: generateId()}))), students: [] },
+                { id: '2', title: 'BTEC Level 2 IT', academicYear: '2024-25', subject: Subject.IT, qualification: QualificationType.EXTENDED_DIPLOMA, units: sortUnits(SAMPLE_UNITS_IT.map(u => ({...u, id: generateId()}))), students: [] }
+            ];
+        });
+
+        useEffect(() => { localStorage.setItem('gm_users', JSON.stringify(users)); }, [users]);
+        useEffect(() => { localStorage.setItem('gm_courses', JSON.stringify(courses)); }, [courses]);
 
         const [currentUser, setCurrentUser] = useState(null);
-        const [activeView, setActiveView] = useState('dashboard'); // dashboard, builder, settings, archive, backup
+        const [activeView, setActiveView] = useState('dashboard');
         const [selectedCourseId, setSelectedCourseId] = useState(null);
 
-        const handleLogin = (user) => {
-          setCurrentUser(user);
-        };
+        const handleUpdateCourse = (id, updates) => setCourses(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
+        const handleCreateCourse = (courseData) => setCourses(prev => [...prev, { id: generateId(), students: [], ...courseData }]);
+        const handleDeleteCourse = (id) => setCourses(prev => prev.filter(c => c.id !== id));
 
-        const handleLogout = () => {
-          setCurrentUser(null);
-          setActiveView('dashboard');
-          setSelectedCourseId(null);
-        };
-
-        const handleCreateCourse = (courseData) => {
-             setCourses(prev => [...prev, { id: generateId(), students: [], ...courseData }]);
-        };
-
-        const handleUpdateCourse = (id, updates) => {
-             setCourses(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
-        };
-
-        const handleDeleteCourse = (id) => {
-             // Functional update guarantees we filter the latest state
-             setCourses(prev => prev.filter(c => c.id !== id));
-        };
-
-        const handleToggleArchive = (e, courseId) => {
-             e.stopPropagation();
-             setCourses(prev => prev.map(c => c.id === courseId ? { ...c, isArchived: !c.isArchived } : c));
-        };
-
-        if (!currentUser) {
-          return <LoginScreen users={users} onLogin={handleLogin} />;
-        }
+        if (!currentUser) return <LoginScreen users={users} onLogin={setCurrentUser} />;
 
         if (selectedCourseId) {
             const course = courses.find(c => c.id === selectedCourseId);
-            if (course) {
-                return (
-                    <>
-                        <header className="bg-white border-b border-slate-200 sticky top-0 z-20">
-                            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-                                <div className="flex items-center space-x-3">
-                                    <div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-sm">
-                                        G
-                                    </div>
-                                    <span className="text-xl font-bold text-slate-900 tracking-tight">GradeMaster</span>
-                                </div>
-                                <div className="flex items-center space-x-4">
-                                     <span className="text-sm text-slate-500 font-medium bg-slate-50 px-3 py-1 rounded-full border border-slate-200">
-                                        {currentUser.username} ({currentUser.role})
-                                     </span>
-                                </div>
-                            </div>
-                        </header>
-                        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                             <StudentManager 
-                                course={course} 
-                                onBack={() => setSelectedCourseId(null)}
-                                onUpdateCourse={handleUpdateCourse}
-                                currentUser={currentUser}
-                             />
-                        </main>
-                    </>
-                );
-            }
+            return (
+                <div className="min-h-screen bg-slate-50">
+                    <header className="bg-white border-b h-16 flex items-center px-8 justify-between sticky top-0 z-20"><div className="flex items-center space-x-3"><div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center text-white font-bold">G</div><span className="font-bold">GradeMaster</span></div><div className="text-sm font-medium px-3 py-1 bg-slate-100 rounded-full">{currentUser.username}</div></header>
+                    <main className="max-w-7xl mx-auto px-8 py-8"><StudentManager course={course} onBack={() => setSelectedCourseId(null)} onUpdateCourse={handleUpdateCourse} currentUser={currentUser} /></main>
+                </div>
+            );
         }
 
-        // Main Dashboard / Builder Views
         return (
             <div className="min-h-screen bg-slate-50">
-                <header className="bg-white border-b border-slate-200 sticky top-0 z-20 shadow-sm">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                             <div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-sm">
-                                G
-                            </div>
-                            <span className="text-xl font-bold text-slate-900 tracking-tight">GradeMaster</span>
-                        </div>
-                        
-                        <nav className="flex space-x-1 bg-slate-100 p-1 rounded-lg">
-                            <button 
-                                onClick={() => setActiveView('dashboard')}
-                                className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${
-                                    activeView === 'dashboard' 
-                                    ? 'bg-white text-slate-900 shadow-sm' 
-                                    : 'text-slate-500 hover:text-slate-900'
-                                }`}
-                            >
-                                Dashboard
-                            </button>
-                            <button 
-                                onClick={() => setActiveView('builder')}
-                                className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${
-                                    activeView === 'builder' 
-                                    ? 'bg-white text-slate-900 shadow-sm' 
-                                    : 'text-slate-500 hover:text-slate-900'
-                                }`}
-                            >
-                                Course Builder
-                            </button>
-                            {(currentUser.role === UserRole.ADMIN || currentUser.role === UserRole.SUPERUSER) && (
-                                <button 
-                                    onClick={() => setActiveView('archive')}
-                                    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${
-                                        activeView === 'archive' 
-                                        ? 'bg-white text-slate-900 shadow-sm' 
-                                        : 'text-slate-500 hover:text-slate-900'
-                                    }`}
-                                >
-                                    Archive
-                                </button>
-                            )}
-                            {currentUser.role === UserRole.SUPERUSER && (
-                                <>
-                                    <button 
-                                        onClick={() => setActiveView('users')}
-                                        className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${
-                                            activeView === 'users' 
-                                            ? 'bg-white text-slate-900 shadow-sm' 
-                                            : 'text-slate-500 hover:text-slate-900'
-                                        }`}
-                                    >
-                                        Users
-                                    </button>
-                                    <button 
-                                        onClick={() => setActiveView('backup')}
-                                        className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all flex items-center ${
-                                            activeView === 'backup' 
-                                            ? 'bg-white text-slate-900 shadow-sm' 
-                                            : 'text-slate-500 hover:text-slate-900'
-                                        }`}
-                                    >
-                                        <Database className="w-3 h-3 mr-1.5" />
-                                        Backup
-                                    </button>
-                                </>
-                            )}
-                        </nav>
-
-                        <div className="flex items-center space-x-4">
-                            <span className="text-sm text-slate-500 font-medium hidden sm:inline-block">
-                                Hello, {currentUser.username}
-                             </span>
-                            <button 
-                                onClick={handleLogout}
-                                className="p-2 text-slate-400 hover:text-slate-600 transition-colors"
-                                title="Sign Out"
-                            >
-                                <LogOut className="w-5 h-5" />
-                            </button>
-                        </div>
-                    </div>
+                <header className="bg-white border-b h-16 flex items-center px-8 justify-between sticky top-0 z-20 shadow-sm">
+                    <div className="flex items-center space-x-3"><div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center text-white font-bold">G</div><span className="font-bold">GradeMaster</span></div>
+                    <nav className="flex space-x-1 bg-slate-100 p-1 rounded-lg">
+                        <button onClick={() => setActiveView('dashboard')} className={`px-4 py-1.5 text-sm font-medium rounded-md ${activeView === 'dashboard' ? 'bg-white shadow-sm' : 'text-slate-500'}`}>Dashboard</button>
+                        <button onClick={() => setActiveView('builder')} className={`px-4 py-1.5 text-sm font-medium rounded-md ${activeView === 'builder' ? 'bg-white shadow-sm' : 'text-slate-500'}`}>Course Builder</button>
+                        {(currentUser.role === UserRole.ADMIN || currentUser.role === UserRole.SUPERUSER) && <button onClick={() => setActiveView('archive')} className={`px-4 py-1.5 text-sm font-medium rounded-md ${activeView === 'archive' ? 'bg-white shadow-sm' : 'text-slate-500'}`}>Archive</button>}
+                        {currentUser.role === UserRole.SUPERUSER && <><button onClick={() => setActiveView('users')} className={`px-4 py-1.5 text-sm font-medium rounded-md ${activeView === 'users' ? 'bg-white shadow-sm' : 'text-slate-500'}`}>Users</button><button onClick={() => setActiveView('backup')} className={`px-4 py-1.5 text-sm font-medium rounded-md ${activeView === 'backup' ? 'bg-white shadow-sm' : 'text-slate-500'}`}>Backup</button></>}
+                    </nav>
+                    <button onClick={() => setCurrentUser(null)} className="p-2 text-slate-400 hover:text-slate-600"><LogOut className="w-5 h-5" /></button>
                 </header>
-
-                <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <main className="max-w-7xl mx-auto px-8 py-8">
                     {activeView === 'dashboard' && (
-                        <div className="space-y-6">
-                            <div>
-                                <h2 className="text-2xl font-bold text-slate-900">Student Dashboard</h2>
-                                <p className="text-slate-500">Select a course to manage grades and view predictions.</p>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {courses.filter(c => !c.isArchived).map(course => (
-                                    <div 
-                                        key={course.id} 
-                                        onClick={() => setSelectedCourseId(course.id)}
-                                        className="group relative bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-lg transition-all cursor-pointer overflow-hidden flex flex-col h-48"
-                                    >
-                                        {/* Color Bar */}
-                                        <div className={`h-2 w-full ${
-                                            course.subject === Subject.ESPORTS ? 'bg-gradient-to-r from-purple-500 to-pink-500' : 
-                                            course.subject === Subject.IT ? 'bg-gradient-to-r from-blue-500 to-cyan-500' : 
-                                            course.subject === Subject.ICT_L2 ? 'bg-gradient-to-r from-orange-400 to-yellow-500' :
-                                            'bg-gradient-to-r from-emerald-500 to-teal-500'
-                                        }`}></div>
-                                        
-                                        <div className="p-6 flex-1 flex flex-col justify-between">
-                                            <div>
-                                                <div className="flex justify-between items-start">
-                                                    <span className="text-xs font-bold tracking-wider text-slate-400 uppercase mb-1">{course.academicYear}</span>
-                                                    {(currentUser.role === UserRole.ADMIN || currentUser.role === UserRole.SUPERUSER) && (
-                                                         <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
-                                                             <label className="flex items-center space-x-2 text-xs text-slate-400 hover:text-slate-600 cursor-pointer">
-                                                                <input 
-                                                                    type="checkbox" 
-                                                                    className="rounded border-slate-300 text-brand-600 focus:ring-brand-500"
-                                                                    checked={course.isArchived || false}
-                                                                    onChange={(e) => handleToggleArchive(e, course.id)}
-                                                                />
-                                                                <span>Archive</span>
-                                                             </label>
-                                                         </div>
-                                                    )}
-                                                </div>
-                                                <h3 className="text-xl font-bold text-slate-900 group-hover:text-brand-600 transition-colors mb-1">{course.title}</h3>
-                                                <p className="text-sm text-slate-500">{course.subject} &bull; {course.students.length} Students</p>
-                                            </div>
-                                            
-                                            <div className="flex items-center text-sm font-medium text-brand-600 mt-4 group-hover:translate-x-1 transition-transform">
-                                                View Course <ArrowRight className="w-4 h-4 ml-1" />
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {activeView === 'builder' && (
-                        <CourseManager 
-                            courses={courses} 
-                            onUpdate={handleUpdateCourse} 
-                            onCreate={handleCreateCourse} 
-                            onDelete={handleDeleteCourse}
-                            currentUser={currentUser}
-                        />
-                    )}
-
-                    {activeView === 'users' && currentUser.role === UserRole.SUPERUSER && (
-                        <UserManagement 
-                            users={users} 
-                            setUsers={setUsers} 
-                            currentUser={currentUser}
-                            courses={courses}
-                            setCourses={setCourses}
-                        />
-                    )}
-
-                    {activeView === 'backup' && currentUser.role === UserRole.SUPERUSER && (
-                        <BackupRestore 
-                            users={users} 
-                            courses={courses}
-                            setUsers={setUsers}
-                            setCourses={setCourses}
-                        />
-                    )}
-
-                    {activeView === 'archive' && (currentUser.role === UserRole.ADMIN || currentUser.role === UserRole.SUPERUSER) && (
-                        <div className="space-y-8">
-                             <div>
-                                <h2 className="text-2xl font-bold text-slate-900">Archived Courses</h2>
-                                <p className="text-slate-500">View and restore past academic years.</p>
-                            </div>
-
-                            {Object.entries(courses.filter(c => c.isArchived).reduce((groups, course) => {
-                                const year = course.academicYear;
-                                if (!groups[year]) groups[year] = [];
-                                groups[year].push(course);
-                                return groups;
-                            }, {})).map(([year, yearCourses]) => (
-                                <div key={year} className="space-y-4">
-                                    <h3 className="text-lg font-bold text-slate-700 border-b border-slate-200 pb-2">{year}</h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                        {yearCourses.map(course => (
-                                            <div key={course.id} className="bg-slate-50 border border-slate-200 rounded-xl p-5 opacity-75 hover:opacity-100 transition-opacity">
-                                                 <div className="flex justify-between items-start mb-2">
-                                                    <h4 className="font-bold text-slate-800">{course.title}</h4>
-                                                    <div onClick={(e) => e.stopPropagation()}>
-                                                        <label className="flex items-center space-x-2 text-xs text-brand-600 cursor-pointer font-medium">
-                                                            <input 
-                                                                type="checkbox" 
-                                                                className="rounded border-slate-300 text-brand-600 focus:ring-brand-500"
-                                                                checked={course.isArchived}
-                                                                onChange={(e) => handleToggleArchive(e, course.id)}
-                                                            />
-                                                            <span>Restore</span>
-                                                        </label>
-                                                    </div>
-                                                </div>
-                                                <div className="text-sm text-slate-500 mb-4">{course.subject}</div>
-                                                <div className="flex items-center text-xs text-slate-400">
-                                                    <Archive className="w-3 h-3 mr-1" />
-                                                    Archived
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {courses.filter(c => !c.isArchived).map(course => (
+                                <div key={course.id} onClick={() => setSelectedCourseId(course.id)} className="bg-white border rounded-xl shadow-sm hover:shadow-lg transition-all cursor-pointer overflow-hidden p-6">
+                                    <div className="text-xs font-bold text-slate-400 mb-1">{course.academicYear}</div>
+                                    <h3 className="text-xl font-bold mb-1">{course.title}</h3>
+                                    <p className="text-sm text-slate-500">{course.subject} &bull; {course.students.length} Students</p>
                                 </div>
                             ))}
-                            {courses.filter(c => c.isArchived).length === 0 && (
-                                <div className="text-center py-12 bg-slate-50 rounded-lg border-2 border-dashed border-slate-200">
-                                    <Archive className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                                    <p className="text-slate-500">No archived courses found.</p>
-                                </div>
-                            )}
                         </div>
                     )}
+                    {activeView === 'builder' && <CourseManager courses={courses} onUpdate={handleUpdateCourse} onCreate={handleCreateCourse} onDelete={handleDeleteCourse} currentUser={currentUser} />}
+                    {activeView === 'users' && <UserManagement users={users} setUsers={setUsers} currentUser={currentUser} courses={courses} setCourses={setCourses} />}
+                    {activeView === 'backup' && <BackupRestore users={users} courses={courses} setUsers={setUsers} setCourses={setCourses} />}
                 </main>
             </div>
         );
       };
 
-      const root = createRoot(document.getElementById('root'));
-      root.render(<App />);
+      createRoot(document.getElementById('root')).render(<App />);
     </script>
   </body>
 </html>
