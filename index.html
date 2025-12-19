@@ -270,11 +270,6 @@
             window.location.href = `mailto:${user.email}?subject=${subject}&body=${body}`;
         };
 
-        const copyToClipboard = (text) => {
-            navigator.clipboard.writeText(text);
-            alert("Copied to clipboard!");
-        };
-
         return (
              <div className="space-y-6">
                  {showEmailSent && (
@@ -311,12 +306,12 @@
                 {view === 'list' ? (
                      <div className="bg-white border rounded-lg shadow-sm overflow-hidden">
                         <table className="min-w-full divide-y divide-slate-200">
-                            <thead className="bg-slate-50"><tr><th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">User</th><th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Email</th><th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th></tr></thead>
+                            <thead className="bg-slate-50"><tr><th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">User</th><th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Role</th><th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th></tr></thead>
                             <tbody className="bg-white divide-y divide-slate-200">
                                 {users.map(user => (
                                     <tr key={user.id} className="hover:bg-slate-50 transition-colors">
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">{user.username}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 italic">{user.email || 'N/A'}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 italic">{user.role}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             <button onClick={() => { setEditingUser(user); setFormData({ username: user.username, password: user.password, email: user.email || '', role: user.role }); setView('form'); }} className="text-brand-600 mr-4"><Edit2 className="w-4 h-4" /></button>
                                             <button onClick={() => triggerMailTo(user)} className="text-brand-600 mr-4" title="Send Email"><Mail className="w-4 h-4" /></button>
@@ -336,6 +331,16 @@
                                  <div><label className="block text-sm font-semibold mb-1.5">Password</label><input type="text" required value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} className="block w-full px-4 py-2 border rounded-xl" /></div>
                              </div>
                              <div><label className="block text-sm font-semibold mb-1.5">Email</label><input type="email" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="block w-full px-4 py-2 border rounded-xl" placeholder="user@example.com" /></div>
+                             <div>
+                                 <label className="block text-sm font-semibold mb-1.5">Access Role</label>
+                                 <select 
+                                    value={formData.role} 
+                                    onChange={e => setFormData({...formData, role: e.target.value})} 
+                                    className="block w-full px-4 py-2 border rounded-xl bg-white"
+                                 >
+                                    {Object.values(UserRole).map(role => <option key={role} value={role}>{role}</option>)}
+                                 </select>
+                             </div>
                              <div className="flex justify-end space-x-3 pt-6 border-t"><button type="button" onClick={() => setView('list')} className="px-6 py-2.5 text-slate-600">Cancel</button><button type="submit" className="px-8 py-2.5 bg-brand-600 text-white font-bold rounded-xl flex items-center"><Send className="w-4 h-4 mr-2" /> {editingUser ? 'Update Account' : 'Create & Send Email'}</button></div>
                          </form>
                     </div>
@@ -389,7 +394,7 @@
                 <header className="bg-white border-b h-16 flex items-center px-8 justify-between sticky top-0 z-20 shadow-sm">
                     <div className="flex items-center space-x-3"><div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center text-white font-bold">G</div><span className="font-bold">GradeMaster</span></div>
                     <nav className="flex space-x-1 bg-slate-100 p-1 rounded-lg">
-                        <button onClick={() => setActiveView('dashboard')} className={`px-4 py-1.5 text-sm font-medium rounded-md ${activeView === 'dashboard' ? 'bg-white shadow-sm' : 'text-slate-50'}`}>Dashboard</button>
+                        <button onClick={() => setActiveView('dashboard')} className={`px-4 py-1.5 text-sm font-medium rounded-md ${activeView === 'dashboard' ? 'bg-white shadow-sm' : 'text-slate-500'}`}>Dashboard</button>
                         <button onClick={() => setActiveView('builder')} className={`px-4 py-1.5 text-sm font-medium rounded-md ${activeView === 'builder' ? 'bg-white shadow-sm' : 'text-slate-500'}`}>Course Builder</button>
                         {currentUser.role === UserRole.SUPERUSER && <button onClick={() => setActiveView('users')} className={`px-4 py-1.5 text-sm font-medium rounded-md ${activeView === 'users' ? 'bg-white shadow-sm' : 'text-slate-500'}`}>Users</button>}
                     </nav>
