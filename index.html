@@ -52,7 +52,7 @@
         ShieldCheck, Plus, Trash2, BookOpen, Edit2, Layout, ArrowLeft, Save, 
         Lock, Users, UserPlus, ChevronLeft, Search, GraduationCap, TrendingUp, 
         AlertCircle, LogIn, Shield, Check, X, ShieldAlert, Archive, RotateCcw,
-        Database, Download, Upload, Mail, Send, Info
+        Database, Download, Upload, Mail, Send, Info, ExternalLink, Copy
       } from 'lucide-react';
 
       // --- HELPERS ---
@@ -61,6 +61,8 @@
         _uniqueIdCounter++;
         return Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9) + '-' + _uniqueIdCounter;
       };
+
+      const APP_URL = "https://frazncc.github.io/GradeMaster/";
 
       const sortUnits = (units) => {
         return [...units].sort((a, b) => {
@@ -123,149 +125,6 @@
         TEACHER: "Teacher"
       };
 
-      // --- CONSTANTS ---
-
-      const POINT_TABLES = {
-        60: {
-          [UnitType.INTERNAL]: { [Grade.U]: 0, [Grade.NP]: 0, [Grade.P]: 6, [Grade.M]: 10, [Grade.D]: 16 },
-          [UnitType.EXTERNAL]: { [Grade.U]: 0, [Grade.NP]: 4, [Grade.P]: 6, [Grade.M]: 10, [Grade.D]: 16 },
-        },
-        90: {
-          [UnitType.INTERNAL]: { [Grade.U]: 0, [Grade.NP]: 0, [Grade.P]: 9, [Grade.M]: 15, [Grade.D]: 24 },
-          [UnitType.EXTERNAL]: { [Grade.U]: 0, [Grade.NP]: 6, [Grade.P]: 9, [Grade.M]: 15, [Grade.D]: 24 },
-        },
-        120: {
-          [UnitType.INTERNAL]: { [Grade.U]: 0, [Grade.NP]: 0, [Grade.P]: 12, [Grade.M]: 20, [Grade.D]: 32 },
-          [UnitType.EXTERNAL]: { [Grade.U]: 0, [Grade.NP]: 12, [Grade.P]: 20, [Grade.M]: 32, [Grade.D]: 48 },
-        }
-      };
-
-      const L2_POINT_TABLES = {
-        30: {
-            [UnitType.INTERNAL]: { [Grade.U]: 0, [Grade.L1P]: 6, [Grade.L2P]: 12, [Grade.L2M]: 18, [Grade.L2D]: 24 },
-            [UnitType.EXTERNAL]: { [Grade.U]: 0, [Grade.L1P]: 6, [Grade.L2P]: 12, [Grade.L2M]: 18, [Grade.L2D]: 24 },
-        },
-        60: {
-            [UnitType.INTERNAL]: { [Grade.U]: 0, [Grade.L1P]: 12, [Grade.L2P]: 24, [Grade.L2M]: 36, [Grade.L2D]: 48 },
-            [UnitType.EXTERNAL]: { [Grade.U]: 0, [Grade.L1P]: 12, [Grade.L2P]: 24, [Grade.L2M]: 36, [Grade.L2D]: 48 },
-        },
-        120: {
-            [UnitType.INTERNAL]: { [Grade.U]: 0, [Grade.L1P]: 24, [Grade.L2P]: 48, [Grade.L2M]: 72, [Grade.L2D]: 96 },
-            [UnitType.EXTERNAL]: { [Grade.U]: 0, [Grade.L1P]: 24, [Grade.L2P]: 48, [Grade.L2M]: 72, [Grade.L2D]: 96 },
-        }
-      };
-
-      const L1_POINT_TABLES = {
-        30: {
-             [UnitType.INTERNAL]: { [Grade.U]: 0, [Grade.P]: 5, [Grade.M]: 10, [Grade.D]: 15 },
-             [UnitType.EXTERNAL]: { [Grade.U]: 0, [Grade.P]: 5, [Grade.M]: 10, [Grade.D]: 15 }, 
-        },
-        60: {
-             [UnitType.INTERNAL]: { [Grade.U]: 0, [Grade.P]: 10, [Grade.M]: 20, [Grade.D]: 30 },
-             [UnitType.EXTERNAL]: { [Grade.U]: 0, [Grade.P]: 10, [Grade.M]: 20, [Grade.D]: 30 },
-        },
-      };
-
-      const GRADE_BOUNDARIES = {
-        [QualificationType.EXTENDED_CERTIFICATE]: [
-          { minPoints: 36, grade: "P", ucas: 16 },
-          { minPoints: 52, grade: "M", ucas: 32 },
-          { minPoints: 74, grade: "D", ucas: 48 },
-          { minPoints: 90, grade: "D*", ucas: 56 },
-        ],
-        [QualificationType.FOUNDATION_DIPLOMA]: [
-          { minPoints: 51, grade: "P", ucas: 24 },
-          { minPoints: 73, grade: "M", ucas: 48 },
-          { minPoints: 104, grade: "D", ucas: 72 },
-          { minPoints: 130, grade: "D*", ucas: 84 },
-        ],
-        [QualificationType.DIPLOMA]: [
-          { minPoints: 72, grade: "PP", ucas: 32 },
-          { minPoints: 88, grade: "MP", ucas: 48 },
-          { minPoints: 104, grade: "MM", ucas: 64 },
-          { minPoints: 124, grade: "DM", ucas: 80 },
-          { minPoints: 144, grade: "DD", ucas: 96 },
-          { minPoints: 162, grade: "D*D", ucas: 104 },
-          { minPoints: 180, grade: "D*D*", ucas: 112 },
-        ],
-        [QualificationType.EXTENDED_DIPLOMA]: [
-          { minPoints: 108, grade: "PPP", ucas: 48 },
-          { minPoints: 124, grade: "MPP", ucas: 64 },
-          { minPoints: 140, grade: "MMP", ucas: 80 },
-          { minPoints: 156, grade: "MMM", ucas: 96 },
-          { minPoints: 176, grade: "DMM", ucas: 112 },
-          { minPoints: 196, grade: "DDM", ucas: 128 },
-          { minPoints: 216, grade: "DDD", ucas: 144 },
-          { minPoints: 234, grade: "D*DD", ucas: 152 },
-          { minPoints: 252, grade: "D*D*D", ucas: 160 },
-          { minPoints: 270, grade: "D*D*D*", ucas: 168 },
-        ],
-        [QualificationType.L2_AWARD]: [
-             { minPoints: 24, grade: "L1 Pass", ucas: 0 },
-             { minPoints: 48, grade: "L2 Pass", ucas: 0 },
-             { minPoints: 72, grade: "L2 Merit", ucas: 0 },
-             { minPoints: 96, grade: "L2 Distinction", ucas: 0 },
-             { minPoints: 100, grade: "L2 Distinction*", ucas: 0 } 
-        ],
-        [QualificationType.L2_CERTIFICATE]: [
-             { minPoints: 48, grade: "L1 Pass", ucas: 0 },
-             { minPoints: 96, grade: "L2 Pass", ucas: 0 },
-             { minPoints: 144, grade: "L2 Merit", ucas: 0 },
-             { minPoints: 192, grade: "L2 Distinction", ucas: 0 },
-             { minPoints: 200, grade: "L2 Distinction*", ucas: 0 }
-        ],
-        [QualificationType.L2_EXTENDED_CERTIFICATE]: [
-             { minPoints: 72, grade: "L1 Pass", ucas: 0 },
-             { minPoints: 144, grade: "L2 Pass", ucas: 0 },
-             { minPoints: 216, grade: "L2 Merit", ucas: 0 },
-             { minPoints: 288, grade: "L2 Distinction", ucas: 0 },
-             { minPoints: 300, grade: "L2 Distinction*", ucas: 0 }
-        ],
-        [QualificationType.L2_DIPLOMA]: [
-             { minPoints: 130, grade: "L2 PP", ucas: 0 },
-             { minPoints: 180, grade: "L2 MP", ucas: 0 },
-             { minPoints: 230, grade: "L2 MM", ucas: 0 },
-             { minPoints: 280, grade: "L2 DM", ucas: 0 },
-             { minPoints: 330, grade: "L2 DD", ucas: 0 },
-             { minPoints: 350, grade: "L2 D*D", ucas: 0 },
-             { minPoints: 370, grade: "L2 D*D*", ucas: 0 },
-        ],
-        [QualificationType.L1_INTRO_DIPLOMA]: [
-             { minPoints: 60, grade: "Pass", ucas: 0 },
-             { minPoints: 110, grade: "Merit", ucas: 0 },
-             { minPoints: 150, grade: "Distinction", ucas: 0 },
-        ]
-      };
-
-      const SAMPLE_UNITS_ESPORTS = [
-        { name: "Unit 1: Introduction to Esports", glh: 60, type: UnitType.INTERNAL },
-        { name: "Unit 2: Esports Skills, Strategies and Analysis", glh: 120, type: UnitType.INTERNAL },
-        { name: "Unit 3: Enterprise and Entrepreneurship", glh: 120, type: UnitType.INTERNAL },
-        { name: "Unit 4: Health, Wellbeing and Fitness", glh: 60, type: UnitType.INTERNAL }
-      ];
-
-      const SAMPLE_UNITS_IT = [
-        { name: "Unit 1: Information Technology Systems", glh: 120, type: UnitType.EXTERNAL },
-        { name: "Unit 2: Creating Systems to Manage Information", glh: 90, type: UnitType.EXTERNAL },
-        { name: "Unit 3: Using Social Media in Business", glh: 90, type: UnitType.INTERNAL },
-        { name: "Unit 6: Website Development", glh: 60, type: UnitType.INTERNAL }
-      ];
-      
-      const SAMPLE_UNITS_ICT_L2 = [
-        { name: "Unit 1: The Online World", glh: 30, type: UnitType.EXTERNAL },
-        { name: "Unit 2: Technology Systems", glh: 30, type: UnitType.EXTERNAL },
-        { name: "Unit 3: A Digital Portfolio", glh: 30, type: UnitType.INTERNAL },
-        { name: "Unit 9: Spreadsheet Development", glh: 30, type: UnitType.INTERNAL },
-        { name: "Unit 13: Website Development", glh: 60, type: UnitType.INTERNAL },
-      ];
-
-      const SAMPLE_UNITS_VOC_L1 = [
-        { name: "A1: Being Organised", glh: 30, type: UnitType.INTERNAL },
-        { name: "A2: Developing a Personal Progression Plan", glh: 30, type: UnitType.INTERNAL },
-        { name: "Unit 5: Contribute to a Team", glh: 30, type: UnitType.INTERNAL },
-        { name: "Unit 6: Customer Service", glh: 30, type: UnitType.INTERNAL }
-      ];
-
       // --- SERVICES ---
       
       const getAvailableGrades = (qualType) => {
@@ -280,66 +139,46 @@
 
       const calculatePointsForUnit = (unit, qualType) => {
         const { glh, type, grade } = unit;
-        let table = POINT_TABLES;
+        let table = {
+          60: { [UnitType.INTERNAL]: { [Grade.U]: 0, [Grade.NP]: 0, [Grade.P]: 6, [Grade.M]: 10, [Grade.D]: 16 }, [UnitType.EXTERNAL]: { [Grade.U]: 0, [Grade.NP]: 4, [Grade.P]: 6, [Grade.M]: 10, [Grade.D]: 16 } },
+          90: { [UnitType.INTERNAL]: { [Grade.U]: 0, [Grade.NP]: 0, [Grade.P]: 9, [Grade.M]: 15, [Grade.D]: 24 }, [UnitType.EXTERNAL]: { [Grade.U]: 0, [Grade.NP]: 6, [Grade.P]: 9, [Grade.M]: 15, [Grade.D]: 24 } },
+          120: { [UnitType.INTERNAL]: { [Grade.U]: 0, [Grade.NP]: 0, [Grade.P]: 12, [Grade.M]: 20, [Grade.D]: 32 }, [UnitType.EXTERNAL]: { [Grade.U]: 0, [Grade.NP]: 12, [Grade.P]: 20, [Grade.M]: 32, [Grade.D]: 48 } }
+        };
         
         if (qualType.startsWith("Level 2")) {
-            table = L2_POINT_TABLES;
+            table = {
+              30: { [UnitType.INTERNAL]: { [Grade.U]: 0, [Grade.L1P]: 6, [Grade.L2P]: 12, [Grade.L2M]: 18, [Grade.L2D]: 24 }, [UnitType.EXTERNAL]: { [Grade.U]: 0, [Grade.L1P]: 6, [Grade.L2P]: 12, [Grade.L2M]: 18, [Grade.L2D]: 24 } },
+              60: { [UnitType.INTERNAL]: { [Grade.U]: 0, [Grade.L1P]: 12, [Grade.L2P]: 24, [Grade.L2M]: 36, [Grade.L2D]: 48 }, [UnitType.EXTERNAL]: { [Grade.U]: 0, [Grade.L1P]: 12, [Grade.L2P]: 24, [Grade.L2M]: 36, [Grade.L2D]: 48 } },
+              120: { [UnitType.INTERNAL]: { [Grade.U]: 0, [Grade.L1P]: 24, [Grade.L2P]: 48, [Grade.L2M]: 72, [Grade.L2D]: 96 }, [UnitType.EXTERNAL]: { [Grade.U]: 0, [Grade.L1P]: 24, [Grade.L2P]: 48, [Grade.L2M]: 72, [Grade.L2D]: 96 } }
+            };
         } else if (qualType.startsWith("Level 1")) {
-            table = L1_POINT_TABLES;
+            table = {
+              30: { [UnitType.INTERNAL]: { [Grade.U]: 0, [Grade.P]: 5, [Grade.M]: 10, [Grade.D]: 15 }, [UnitType.EXTERNAL]: { [Grade.U]: 0, [Grade.P]: 5, [Grade.M]: 10, [Grade.D]: 15 } },
+              60: { [UnitType.INTERNAL]: { [Grade.U]: 0, [Grade.P]: 10, [Grade.M]: 20, [Grade.D]: 30 }, [UnitType.EXTERNAL]: { [Grade.U]: 0, [Grade.P]: 10, [Grade.M]: 20, [Grade.D]: 30 } }
+            };
         }
 
         if (table[glh] && table[glh][type] && table[glh][type][grade] !== undefined) {
           return table[glh][type][grade];
         }
-        
-        let multiplier = 0;
-        if (qualType.startsWith("Level 2")) {
-             if (grade === Grade.L1P) multiplier = 0.2;
-             if (grade === Grade.L2P) multiplier = 0.4;
-             if (grade === Grade.L2M) multiplier = 0.6;
-             if (grade === Grade.L2D) multiplier = 0.8;
-             return Math.round(glh * multiplier);
-        }
-        
-        if (qualType.startsWith("Level 1")) {
-            if (grade === Grade.P) multiplier = 0.16;
-            if (grade === Grade.M) multiplier = 0.33;
-            if (grade === Grade.D) multiplier = 0.5;
-            return Math.round(glh * multiplier);
-        }
-
-        if (type === UnitType.INTERNAL) {
-            if (grade === Grade.P) multiplier = 1;
-            if (grade === Grade.M) multiplier = 1.666;
-            if (grade === Grade.D) multiplier = 2.666;
-        } else {
-            if (grade === Grade.NP) multiplier = 1;
-            if (grade === Grade.P) multiplier = 1.666;
-            if (grade === Grade.M) multiplier = 2.666;
-            if (grade === Grade.D) multiplier = 4.0;
-        }
-        return Math.round((glh / 10) * multiplier);
+        return 0;
       };
 
       const calculateQualification = (units, qualType) => {
         const totalPoints = units.reduce((sum, unit) => sum + calculatePointsForUnit(unit, qualType), 0);
-        const boundaries = GRADE_BOUNDARIES[qualType] || [];
+        const boundaries = {
+          [QualificationType.EXTENDED_CERTIFICATE]: [ { minPoints: 36, grade: "P", ucas: 16 }, { minPoints: 52, grade: "M", ucas: 32 }, { minPoints: 74, grade: "D", ucas: 48 }, { minPoints: 90, grade: "D*", ucas: 56 } ],
+          [QualificationType.EXTENDED_DIPLOMA]: [ { minPoints: 108, grade: "PPP", ucas: 48 }, { minPoints: 124, grade: "MPP", ucas: 64 }, { minPoints: 140, grade: "MMP", ucas: 80 }, { minPoints: 156, grade: "MMM", ucas: 96 }, { minPoints: 176, grade: "DMM", ucas: 112 }, { minPoints: 196, grade: "DDM", ucas: 128 }, { minPoints: 216, grade: "DDD", ucas: 144 }, { minPoints: 234, grade: "D*DD", ucas: 152 }, { minPoints: 252, grade: "D*D*D", ucas: 160 }, { minPoints: 270, grade: "D*D*D*", ucas: 168 } ]
+        };
+        const activeBoundaries = boundaries[qualType] || [];
         let achievedGrade = "U";
         let achievedUcas = 0;
         let nextBoundary = undefined;
 
-        for (let i = 0; i < boundaries.length; i++) {
-          const b = boundaries[i];
-          if (totalPoints >= b.minPoints) {
-            achievedGrade = b.grade;
-            achievedUcas = b.ucas;
-          } else {
-            nextBoundary = {
-              grade: b.grade,
-              pointsNeeded: b.minPoints - totalPoints
-            };
-            break;
-          }
+        for (let i = 0; i < activeBoundaries.length; i++) {
+          const b = activeBoundaries[i];
+          if (totalPoints >= b.minPoints) { achievedGrade = b.grade; achievedUcas = b.ucas; }
+          else { nextBoundary = { grade: b.grade, pointsNeeded: b.minPoints - totalPoints }; break; }
         }
         return { totalPoints, grade: achievedGrade, ucasPoints: achievedUcas, nextGradeBoundary: nextBoundary };
       };
@@ -355,16 +194,6 @@
       // --- COMPONENTS ---
 
       const ResultsPanel = ({ results, variant = 'default' }) => {
-        const pointsNeeded = results.nextGradeBoundary ? results.nextGradeBoundary.pointsNeeded : 0;
-        const totalTarget = results.totalPoints + pointsNeeded;
-        const percentage = totalTarget > 0 ? (results.totalPoints / totalTarget) * 100 : 0;
-        
-        const radius = 70;
-        const stroke = 12;
-        const normalizedRadius = radius - stroke * 2;
-        const circumference = normalizedRadius * 2 * Math.PI;
-        const strokeDashoffset = circumference - (percentage / 100) * circumference;
-
         if (variant === 'compact') {
             return (
                 <div className="flex items-center space-x-6 bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 shadow-sm">
@@ -376,64 +205,18 @@
                         <div className="text-brand-500 opacity-80"><TrendingUp size={20} /></div>
                     </div>
                     <div className="flex items-center space-x-6">
-                        <div>
-                             <div className="flex items-center text-[10px] text-slate-500 uppercase font-semibold mb-0.5">
-                                <GraduationCap className="w-3 h-3 mr-1" /> UCAS
-                             </div>
-                             <div className="text-lg font-bold text-slate-700 leading-none">{results.ucasPoints}</div>
-                        </div>
-                        <div>
-                             <div className="flex items-center text-[10px] text-slate-500 uppercase font-semibold mb-0.5">
-                                <Calculator className="w-3 h-3 mr-1" /> Points
-                             </div>
-                             <div className="text-lg font-bold text-slate-700 leading-none">{results.totalPoints}</div>
-                        </div>
+                        <div><div className="text-[10px] text-slate-500 uppercase font-semibold">UCAS</div><div className="text-lg font-bold text-slate-700 leading-none">{results.ucasPoints}</div></div>
+                        <div><div className="text-[10px] text-slate-500 uppercase font-semibold">Points</div><div className="text-lg font-bold text-slate-700 leading-none">{results.totalPoints}</div></div>
                     </div>
                 </div>
             );
         }
-
         return (
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 h-full flex flex-col">
-            <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center">
-              <TrendingUp className="w-5 h-5 mr-2 text-brand-500" />
-              Projected Outcome
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-              <div className="space-y-6">
-                <div className="bg-brand-50 p-4 rounded-lg border border-brand-100">
-                  <div className="text-sm text-brand-600 mb-1 flex items-center">
-                      <TrendingUp className="w-4 h-4 mr-2" /> Projected Grade
-                  </div>
-                  <div className="text-4xl font-extrabold text-brand-700">{results.grade}</div>
-                </div>
-                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
-                  <div className="text-sm text-slate-500 mb-1 flex items-center">
-                      <GraduationCap className="w-4 h-4 mr-2" /> UCAS Points
-                  </div>
-                  <div className="text-3xl font-bold text-slate-900">{results.ucasPoints}</div>
-                </div>
-                {results.nextGradeBoundary && (
-                   <div className="flex items-start bg-amber-50 p-3 rounded-md text-amber-700 text-sm border border-amber-100">
-                      <AlertCircle className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0 text-amber-500" />
-                      <span>
-                          You need <strong>{results.nextGradeBoundary.pointsNeeded}</strong> more points to reach <strong>{results.nextGradeBoundary.grade}</strong>.
-                      </span>
-                   </div>
-                )}
-              </div>
-              <div className="h-48 relative flex items-center justify-center">
-                 <svg height={radius * 2} width={radius * 2} className="transform -rotate-90">
-                    <circle stroke="#f1f5f9" strokeWidth={stroke} fill="transparent" r={normalizedRadius} cx={radius} cy={radius} />
-                    <circle stroke="#0ea5e9" strokeWidth={stroke} strokeDasharray={circumference + ' ' + circumference} style={{ strokeDashoffset, transition: 'stroke-dashoffset 0.5s ease-in-out' }} strokeLinecap="round" fill="transparent" r={normalizedRadius} cx={radius} cy={radius} />
-                  </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                   <div className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Total</div>
-                   <div className="text-2xl font-bold text-slate-800">{results.totalPoints}</div>
-                   <div className="text-[10px] text-slate-400">Points</div>
-                </div>
-              </div>
-            </div>
+            <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center"><TrendingUp className="w-5 h-5 mr-2 text-brand-500" />Projected Outcome</h2>
+            <div className="bg-brand-50 p-4 rounded-lg border border-brand-100 mb-4"><div className="text-sm text-brand-600 mb-1">Projected Grade</div><div className="text-4xl font-extrabold text-brand-700">{results.grade}</div></div>
+            <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 mb-4"><div className="text-sm text-slate-500 mb-1">UCAS Points</div><div className="text-3xl font-bold text-slate-900">{results.ucasPoints}</div></div>
+            {results.nextGradeBoundary && (<div className="bg-amber-50 p-3 rounded-md text-amber-700 text-sm border border-amber-100">Need <strong>{results.nextGradeBoundary.pointsNeeded}</strong> more points for <strong>{results.nextGradeBoundary.grade}</strong>.</div>)}
           </div>
         );
       };
@@ -442,228 +225,102 @@
         const [username, setUsername] = useState('');
         const [password, setPassword] = useState('');
         const [error, setError] = useState('');
-
         const handleSubmit = (e) => {
           e.preventDefault();
-          setError('');
           const user = users.find(u => u.username === username && u.password === password);
-          if (user) onLogin(user);
-          else setError('Invalid username or password');
+          if (user) onLogin(user); else setError('Invalid credentials');
         };
-
         return (
           <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
             <div className="bg-white border border-slate-200 rounded-2xl shadow-xl w-full max-w-md p-8 relative overflow-hidden">
-              <div className="absolute top-0 right-0 -mr-16 -mt-16 w-32 h-32 bg-brand-100 opacity-50 rounded-full blur-3xl"></div>
-              <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-32 h-32 bg-purple-100 opacity-50 rounded-full blur-3xl"></div>
-              <div className="relative z-10">
-                <div className="flex justify-center mb-8">
-                  <div className="w-16 h-16 bg-brand-50 rounded-full flex items-center justify-center border border-brand-100 shadow-inner text-brand-600">
-                    <Lock className="w-8 h-8" />
-                  </div>
-                </div>
-                <div className="text-center mb-8">
-                  <h1 className="text-3xl font-bold text-slate-900 mb-2">GradeMaster</h1>
-                  <p className="text-slate-500">Please sign in to continue</p>
-                </div>
-                {error && (
-                  <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 flex items-start text-sm">
-                    <AlertCircle className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0 text-red-500" />
-                    {error}
-                  </div>
-                )}
-                <form onSubmit={handleSubmit} className="space-y-5">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Username</label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                        <Users className="w-5 h-5" />
-                      </div>
-                      <input
-                        type="text"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        className="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-white shadow-sm"
-                        placeholder="Enter your username"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
-                    <div className="relative">
-                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                        <Lock className="w-5 h-5" />
-                      </div>
-                      <input
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-white shadow-sm"
-                        placeholder="••••••••"
-                      />
-                    </div>
-                  </div>
-                  <button
-                    type="submit"
-                    className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition-colors"
-                  >
-                    Sign In
-                  </button>
-                </form>
-              </div>
+              <div className="flex justify-center mb-8"><div className="w-16 h-16 bg-brand-50 rounded-full flex items-center justify-center border border-brand-100 shadow-inner text-brand-600"><Lock className="w-8 h-8" /></div></div>
+              <h1 className="text-3xl font-bold text-slate-900 text-center mb-8">GradeMaster</h1>
+              {error && <div className="bg-red-50 text-red-700 px-4 py-3 rounded-lg mb-6 text-sm">{error}</div>}
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} className="block w-full px-4 py-2 border rounded-lg" placeholder="Username" />
+                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="block w-full px-4 py-2 border rounded-lg" placeholder="Password" />
+                <button type="submit" className="w-full py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-lg shadow-sm">Sign In</button>
+              </form>
+              <div className="mt-8 text-center text-xs text-slate-400">Environment: {APP_URL}</div>
             </div>
           </div>
         );
       };
 
-      const UserManagement = ({ users, setUsers, currentUser, courses, setCourses }) => {
+      const UserManagement = ({ users, setUsers, currentUser }) => {
         const [view, setView] = useState('list');
         const [editingUser, setEditingUser] = useState(null);
         const [formData, setFormData] = useState({ username: '', password: '', email: '', role: UserRole.TEACHER });
         const [showEmailSent, setShowEmailSent] = useState(null);
 
-        if (currentUser.role !== UserRole.SUPERUSER) return null;
-
         const handleSave = (e) => {
             e.preventDefault();
             const newUser = { id: editingUser ? editingUser.id : generateId(), ...formData };
-            
-            if (editingUser) {
-                setUsers(prev => prev.map(u => u.id === editingUser.id ? newUser : u));
-            } else {
-                setUsers(prev => [...prev, newUser]);
-                // Simulate sending email
-                setShowEmailSent(newUser);
+            if (editingUser) setUsers(prev => prev.map(u => u.id === editingUser.id ? newUser : u));
+            else {
+              setUsers(prev => [...prev, newUser]);
+              setShowEmailSent(newUser);
             }
-            setView('list');
-            setEditingUser(null);
-            setFormData({ username: '', password: '', email: '', role: UserRole.TEACHER });
+            setView('list'); setEditingUser(null);
         };
 
-        const handleEdit = (user) => {
-            setEditingUser(user);
-            setFormData({ username: user.username, password: user.password, email: user.email || '', role: user.role });
-            setView('form');
+        const triggerMailTo = (user) => {
+            const subject = encodeURIComponent("Your GradeMaster Account Credentials");
+            const body = encodeURIComponent(`Hello ${user.username},\n\nYour account for GradeMaster has been created.\n\nLogin URL: ${APP_URL}\nUsername: ${user.username}\nPassword: ${user.password}\n\nPlease login and check your allocated courses.\n\nRegards,\nGradeMaster Admin`);
+            window.location.href = `mailto:${user.email}?subject=${subject}&body=${body}`;
         };
 
-        const handleDelete = (e, userId) => {
-            e.preventDefault();
-            e.stopPropagation();
-            if (window.confirm('Are you sure you want to delete this user?')) {
-                setUsers(prev => prev.filter(u => u.id !== userId));
-            }
+        const copyToClipboard = (text) => {
+            navigator.clipboard.writeText(text);
+            alert("Copied to clipboard!");
         };
 
         return (
              <div className="space-y-6">
-                 {/* Email Sent Notification Overlay */}
                  {showEmailSent && (
-                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
                          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-8 relative overflow-hidden">
-                             <div className="absolute top-0 right-0 -mt-8 -mr-8 w-24 h-24 bg-brand-100 rounded-full opacity-50"></div>
                              <div className="flex flex-col items-center text-center">
-                                 <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-6 shadow-inner">
-                                     <Mail className="w-10 h-10" />
-                                 </div>
-                                 <h3 className="text-2xl font-bold text-slate-900 mb-2">Credentials Dispatched!</h3>
-                                 <p className="text-slate-600 mb-6"> An automated email has been simulated and "sent" to <strong>{showEmailSent.email}</strong> with their login details.</p>
+                                 <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-6 shadow-inner"><Mail className="w-10 h-10" /></div>
+                                 <h3 className="text-2xl font-bold text-slate-900 mb-2">User Created Successfully</h3>
+                                 <p className="text-slate-600 mb-6">You can now send the credentials to <strong>{showEmailSent.email}</strong>.</p>
                                  
                                  <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-5 text-left space-y-3 mb-8">
                                      <div className="flex justify-between border-b border-slate-100 pb-2">
                                          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Login URL</span>
-                                         <span className="text-xs font-mono text-brand-600 underline">https://grademaster.edu/login</span>
+                                         <span className="text-xs font-mono text-brand-600 truncate ml-4">{APP_URL}</span>
                                      </div>
-                                     <div className="flex justify-between">
-                                         <span className="text-sm text-slate-500">Username</span>
-                                         <span className="text-sm font-bold text-slate-900">{showEmailSent.username}</span>
-                                     </div>
-                                     <div className="flex justify-between">
-                                         <span className="text-sm text-slate-500">Password</span>
-                                         <span className="text-sm font-bold text-slate-900">{showEmailSent.password}</span>
-                                     </div>
+                                     <div className="flex justify-between"><span className="text-sm text-slate-500">Username</span><span className="text-sm font-bold text-slate-900">{showEmailSent.username}</span></div>
+                                     <div className="flex justify-between"><span className="text-sm text-slate-500">Password</span><span className="text-sm font-bold text-slate-900">{showEmailSent.password}</span></div>
                                  </div>
 
-                                 <button 
-                                     onClick={() => setShowEmailSent(null)}
-                                     className="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl transition-all shadow-md active:scale-95"
-                                 >
-                                     Excellent, proceed
-                                 </button>
+                                 <div className="grid grid-cols-2 gap-4 w-full">
+                                     <button onClick={() => triggerMailTo(showEmailSent)} className="py-3 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl flex items-center justify-center"><ExternalLink className="w-4 h-4 mr-2" /> Open Email Client</button>
+                                     <button onClick={() => setShowEmailSent(null)} className="py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl">Close</button>
+                                 </div>
                              </div>
                          </div>
                      </div>
                  )}
 
                  <div className="flex items-center justify-between">
-                    <div>
-                        <h2 className="text-2xl font-bold text-slate-900">User Management</h2>
-                        <p className="text-slate-500">Manage system access and roles.</p>
-                    </div>
-                    
-                    <div className="flex space-x-3">
-                        {view === 'list' && (
-                            <button 
-                                onClick={() => { setEditingUser(null); setFormData({ username: '', password: '', email: '', role: UserRole.TEACHER }); setView('form'); }}
-                                className="flex items-center px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 shadow-sm transition-colors text-sm font-medium"
-                            >
-                                <UserPlus className="w-4 h-4 mr-2" />
-                                Add User
-                            </button>
-                        )}
-                    </div>
+                    <h2 className="text-2xl font-bold text-slate-900">User Management</h2>
+                    {view === 'list' && <button onClick={() => { setEditingUser(null); setFormData({ username: '', password: '', email: '', role: UserRole.TEACHER }); setView('form'); }} className="flex items-center px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium"><UserPlus className="w-4 h-4 mr-2" /> Add User</button>}
                 </div>
 
                 {view === 'list' ? (
-                     <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+                     <div className="bg-white border rounded-lg shadow-sm overflow-hidden">
                         <table className="min-w-full divide-y divide-slate-200">
-                            <thead className="bg-slate-50">
-                                <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">User</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Email</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Role</th>
-                                    <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
-                                </tr>
-                            </thead>
+                            <thead className="bg-slate-50"><tr><th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">User</th><th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Email</th><th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th></tr></thead>
                             <tbody className="bg-white divide-y divide-slate-200">
                                 {users.map(user => (
                                     <tr key={user.id} className="hover:bg-slate-50 transition-colors">
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="flex items-center">
-                                                <div className="w-8 h-8 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-bold text-xs mr-3">
-                                                    {user.username.charAt(0).toUpperCase()}
-                                                </div>
-                                                <span className="text-sm font-medium text-slate-900">{user.username}</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 italic">{user.email || 'No email provided'}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                                user.role === UserRole.SUPERUSER ? 'bg-purple-100 text-purple-800' :
-                                                user.role === UserRole.ADMIN ? 'bg-blue-100 text-blue-800' :
-                                                'bg-slate-100 text-slate-800'
-                                            }`}>
-                                                {user.role}
-                                            </span>
-                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">{user.username}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 italic">{user.email || 'N/A'}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <div className="flex items-center justify-end space-x-3">
-                                                 <button 
-                                                    type="button"
-                                                    onClick={() => handleEdit(user)}
-                                                    className="text-brand-600 hover:text-brand-900 transition-colors p-1"
-                                                >
-                                                    <Edit2 className="w-4 h-4" />
-                                                </button>
-                                                {user.username !== 'Frazadmin' && (
-                                                    <button 
-                                                        type="button"
-                                                        onClick={(e) => handleDelete(e, user.id)}
-                                                        className="text-red-600 hover:text-red-900 transition-colors p-1"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
-                                                )}
-                                            </div>
+                                            <button onClick={() => { setEditingUser(user); setFormData({ username: user.username, password: user.password, email: user.email || '', role: user.role }); setView('form'); }} className="text-brand-600 mr-4"><Edit2 className="w-4 h-4" /></button>
+                                            <button onClick={() => triggerMailTo(user)} className="text-brand-600 mr-4" title="Send Email"><Mail className="w-4 h-4" /></button>
+                                            <button onClick={() => { if(confirm('Delete?')) setUsers(prev => prev.filter(u => u.id !== user.id))}} className="text-red-600"><Trash2 className="w-4 h-4" /></button>
                                         </td>
                                     </tr>
                                 ))}
@@ -671,353 +328,19 @@
                         </table>
                      </div>
                 ) : (
-                    <div className="bg-white border border-slate-200 rounded-lg shadow-sm p-8 max-w-2xl mx-auto">
-                         <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center">
-                             <UserPlus className="w-5 h-5 mr-3 text-brand-600" />
-                             {editingUser ? 'Edit User' : 'Create New User'}
-                         </h3>
+                    <div className="bg-white border rounded-lg shadow-sm p-8 max-w-2xl mx-auto">
+                         <h3 className="text-xl font-bold text-slate-900 mb-6">{editingUser ? 'Edit User' : 'Create New User'}</h3>
                          <form onSubmit={handleSave} className="space-y-5">
-                             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                 <div>
-                                     <label className="block text-sm font-semibold text-slate-700 mb-1.5">Username</label>
-                                     <input 
-                                        type="text" 
-                                        required 
-                                        value={formData.username}
-                                        onChange={e => setFormData({...formData, username: e.target.value})}
-                                        className="block w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-brand-500 focus:border-brand-500 bg-slate-50 transition-all"
-                                        placeholder="e.g. jdoe"
-                                     />
-                                 </div>
-                                 <div>
-                                     <label className="block text-sm font-semibold text-slate-700 mb-1.5">Initial Password</label>
-                                     <input 
-                                        type="text" 
-                                        required 
-                                        value={formData.password}
-                                        onChange={e => setFormData({...formData, password: e.target.value})}
-                                        className="block w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-brand-500 focus:border-brand-500 bg-slate-50 transition-all"
-                                        placeholder="••••••••"
-                                     />
-                                 </div>
+                             <div className="grid grid-cols-2 gap-5">
+                                 <div><label className="block text-sm font-semibold mb-1.5">Username</label><input type="text" required value={formData.username} onChange={e => setFormData({...formData, username: e.target.value})} className="block w-full px-4 py-2 border rounded-xl" /></div>
+                                 <div><label className="block text-sm font-semibold mb-1.5">Password</label><input type="text" required value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} className="block w-full px-4 py-2 border rounded-xl" /></div>
                              </div>
-                             <div>
-                                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">Email Address</label>
-                                 <div className="relative">
-                                     <Mail className="absolute left-3 top-3 w-5 h-5 text-slate-400" />
-                                     <input 
-                                        type="email" 
-                                        required 
-                                        value={formData.email}
-                                        onChange={e => setFormData({...formData, email: e.target.value})}
-                                        className="block w-full pl-11 pr-4 py-2.5 border border-slate-300 rounded-xl focus:ring-brand-500 focus:border-brand-500 bg-slate-50 transition-all"
-                                        placeholder="user@example.com"
-                                     />
-                                 </div>
-                                 <p className="mt-1.5 text-xs text-slate-400 flex items-center">
-                                     <Info className="w-3 h-3 mr-1" /> Login credentials will be automatically sent to this address.
-                                 </p>
-                             </div>
-                             <div>
-                                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">Access Role</label>
-                                 <select 
-                                    value={formData.role}
-                                    onChange={e => setFormData({...formData, role: e.target.value})}
-                                    className="block w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-brand-500 focus:border-brand-500 bg-slate-50 transition-all appearance-none"
-                                 >
-                                     {Object.values(UserRole).map(role => (
-                                         <option key={role} value={role}>{role}</option>
-                                     ))}
-                                 </select>
-                             </div>
-                             <div className="flex justify-end space-x-3 pt-6 border-t border-slate-100">
-                                 <button 
-                                    type="button"
-                                    onClick={() => setView('list')}
-                                    className="px-6 py-2.5 text-sm font-bold text-slate-600 hover:text-slate-900 transition-colors"
-                                 >
-                                     Cancel
-                                 </button>
-                                 <button 
-                                    type="submit"
-                                    className="px-8 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl transition-all shadow-md flex items-center"
-                                 >
-                                     <Send className="w-4 h-4 mr-2" />
-                                     {editingUser ? 'Update Account' : 'Create & Send Email'}
-                                 </button>
-                             </div>
+                             <div><label className="block text-sm font-semibold mb-1.5">Email</label><input type="email" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="block w-full px-4 py-2 border rounded-xl" placeholder="user@example.com" /></div>
+                             <div className="flex justify-end space-x-3 pt-6 border-t"><button type="button" onClick={() => setView('list')} className="px-6 py-2.5 text-slate-600">Cancel</button><button type="submit" className="px-8 py-2.5 bg-brand-600 text-white font-bold rounded-xl flex items-center"><Send className="w-4 h-4 mr-2" /> {editingUser ? 'Update Account' : 'Create & Send Email'}</button></div>
                          </form>
                     </div>
                 )}
              </div>
-        );
-      };
-
-      const BackupRestore = ({ users, courses, setUsers, setCourses }) => {
-        const handleExportData = () => {
-            const data = { users, courses, exportDate: new Date().toISOString(), version: "1.0" };
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `grademaster-backup-${new Date().toISOString().split('T')[0]}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        };
-
-        const handleImportData = (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            if (!window.confirm("WARNING: Importing data will completely overwrite all current users, courses, and student records. This action cannot be undone. Are you sure?")) {
-                e.target.value = null; 
-                return;
-            }
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                try {
-                    const data = JSON.parse(event.target.result);
-                    if (data.users && Array.isArray(data.users)) setUsers(data.users);
-                    if (data.courses && Array.isArray(data.courses)) setCourses(data.courses);
-                    alert("Backup restored successfully!");
-                } catch (error) {
-                    alert("Failed to import data. Invalid file format.");
-                }
-            };
-            reader.readAsText(file);
-            e.target.value = null; 
-        };
-
-        return (
-            <div className="max-w-4xl mx-auto space-y-8">
-                <div>
-                    <h2 className="text-2xl font-bold text-slate-900">System Backup & Restore</h2>
-                    <p className="text-slate-500">Securely export your data or restore from a previous backup.</p>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-6 flex flex-col items-center text-center space-y-4">
-                        <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center text-brand-600 mb-2">
-                            <Download className="w-8 h-8" />
-                        </div>
-                        <h3 className="text-lg font-bold text-slate-900">Export Database</h3>
-                        <p className="text-sm text-slate-500 px-4">Download a full JSON backup of all data.</p>
-                        <button onClick={handleExportData} className="mt-4 w-full py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-lg shadow-sm transition-colors flex items-center justify-center">
-                            <Download className="w-4 h-4 mr-2" /> Download Backup
-                        </button>
-                    </div>
-                    <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-6 flex flex-col items-center text-center space-y-4">
-                         <div className="w-16 h-16 bg-purple-50 rounded-full flex items-center justify-center text-purple-600 mb-2">
-                            <Upload className="w-8 h-8" />
-                        </div>
-                        <h3 className="text-lg font-bold text-slate-900">Restore Database</h3>
-                        <p className="text-sm text-slate-500 px-4">Upload a JSON file to restore the system.</p>
-                        <label className="mt-4 w-full py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-medium rounded-lg shadow-sm transition-colors cursor-pointer flex items-center justify-center">
-                            <Upload className="w-4 h-4 mr-2" /> Select Backup File
-                            <input type="file" accept=".json" onChange={handleImportData} className="hidden" />
-                        </label>
-                    </div>
-                </div>
-            </div>
-        );
-      };
-
-      const CourseManager = ({ courses, onUpdate, onCreate, onDelete, currentUser }) => {
-        const [view, setView] = useState('list');
-        const [editingCourse, setEditingCourse] = useState(null);
-        const [formData, setFormData] = useState({ title: '', year: '2025-26', subject: Subject.ESPORTS, qualification: QualificationType.EXTENDED_DIPLOMA, units: [] });
-        const isEditor = currentUser.role === UserRole.ADMIN || currentUser.role === UserRole.SUPERUSER || currentUser.role === UserRole.TEACHER;
-        const isSuperuser = currentUser.role === UserRole.SUPERUSER;
-
-        const handleCreate = () => {
-            setEditingCourse(null);
-            let defaultUnits = SAMPLE_UNITS_ESPORTS.map(u => ({...u, id: generateId()}));
-            if (formData.subject === Subject.IT) defaultUnits = SAMPLE_UNITS_IT.map(u => ({...u, id: generateId()}));
-            if (formData.subject === Subject.ICT_L2) defaultUnits = SAMPLE_UNITS_ICT_L2.map(u => ({...u, id: generateId()}));
-            if (formData.subject === Subject.VOCATIONAL_L1) defaultUnits = SAMPLE_UNITS_VOC_L1.map(u => ({...u, id: generateId()}));
-            setFormData({ title: '', year: '2025-26', subject: Subject.ESPORTS, qualification: QualificationType.EXTENDED_DIPLOMA, units: sortUnits([...defaultUnits]) });
-            setView('form');
-        };
-
-        const handleEdit = (course) => {
-            setEditingCourse(course);
-            setFormData({ title: course.title, year: course.academicYear, subject: course.subject, qualification: course.qualification, units: sortUnits(course.units) });
-            setView('form');
-        };
-
-        const handleSave = (e) => {
-            e.preventDefault();
-            const courseData = { title: formData.title || `${formData.year} ${formData.subject}`, academicYear: formData.year, subject: formData.subject, qualification: formData.qualification, units: formData.units };
-            if (editingCourse) onUpdate(editingCourse.id, courseData);
-            else onCreate(courseData);
-            setView('list');
-        };
-
-        if (view === 'list') {
-            return (
-                <div className="space-y-6">
-                    <div className="flex justify-between items-center">
-                        <div>
-                            <h2 className="text-2xl font-bold text-slate-900">Course Builder</h2>
-                            <p className="text-slate-500">Create and manage your course specifications.</p>
-                        </div>
-                        {isEditor && <button onClick={handleCreate} className="flex items-center px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 shadow-sm transition-colors text-sm font-medium"><Plus className="w-4 h-4 mr-2" /> Create New Course</button>}
-                    </div>
-                    <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-                        <table className="min-w-full divide-y divide-slate-200">
-                            <thead className="bg-slate-50">
-                                <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Course Name</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Year</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Subject</th>
-                                    {isEditor && <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>}
-                                </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-slate-200">
-                                {courses.map(course => (
-                                    <tr key={course.id} className="hover:bg-slate-50 transition-colors">
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm font-bold text-slate-900">{course.title}</div>
-                                            <div className="text-xs text-slate-500">{course.qualification}</div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{course.academicYear}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap"><span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-800 border border-slate-200">{course.subject}</span></td>
-                                        {isEditor && (
-                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                <div className="flex items-center justify-end space-x-3">
-                                                    <button onClick={() => handleEdit(course)} className="text-slate-400 hover:text-brand-600 transition-colors"><Edit2 className="w-4 h-4" /></button>
-                                                    {isSuperuser && <button onClick={(e) => { e.stopPropagation(); if (window.confirm("Delete?")) onDelete(course.id); }} className="text-slate-400 hover:text-red-600 transition-colors"><X className="w-4 h-4" /></button>}
-                                                </div>
-                                            </td>
-                                        )}
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            );
-        }
-
-        return (
-            <div className="max-w-4xl mx-auto">
-                <button onClick={() => setView('list')} className="flex items-center text-slate-500 hover:text-slate-900 mb-6 transition-colors"><ArrowLeft className="w-4 h-4 mr-1" /> Back to Courses</button>
-                <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-8">
-                    <h2 className="text-2xl font-bold text-slate-900 mb-6">{editingCourse ? 'Edit Course' : 'Create New Course'}</h2>
-                    <form onSubmit={handleSave} className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                             <div><label className="block text-sm font-medium text-slate-700 mb-1">Course Title</label><input type="text" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-brand-500" required /></div>
-                             <div><label className="block text-sm font-medium text-slate-700 mb-1">Academic Year</label><input type="text" value={formData.year} onChange={e => setFormData({...formData, year: e.target.value})} className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-brand-500" required /></div>
-                             <div><label className="block text-sm font-medium text-slate-700 mb-1">Subject</label><select value={formData.subject} onChange={e => setFormData({...formData, subject: e.target.value})} className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-brand-500">{Object.values(Subject).map(s => <option key={s} value={s}>{s}</option>)}</select></div>
-                             <div><label className="block text-sm font-medium text-slate-700 mb-1">Qualification Size</label><select value={formData.qualification} onChange={e => setFormData({...formData, qualification: e.target.value})} className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-brand-500">{Object.values(QualificationType).map(q => <option key={q} value={q}>{q}</option>)}</select></div>
-                        </div>
-                        <div className="flex justify-end pt-6"><button type="submit" className="px-6 py-2 bg-brand-600 text-white font-medium rounded-lg hover:bg-brand-700 shadow-sm transition-colors flex items-center"><Save className="w-4 h-4 mr-2" /> Save Course</button></div>
-                    </form>
-                </div>
-            </div>
-        );
-      };
-
-      const StudentManager = ({ course, onBack, onUpdateCourse, currentUser }) => {
-        const [view, setView] = useState('list');
-        const [activeStudent, setActiveStudent] = useState(null);
-        const [showAddStudentModal, setShowAddStudentModal] = useState(false);
-        const [newStudentName, setNewStudentName] = useState('');
-        const isAdmin = currentUser.role === UserRole.ADMIN || currentUser.role === UserRole.SUPERUSER;
-        const canManageStudents = isAdmin || currentUser.role === UserRole.TEACHER;
-        const canUnlock = isAdmin;
-
-        const handleAddStudentSubmit = (e) => {
-             e.preventDefault();
-             if (newStudentName.trim()) {
-                 const newStudent = { id: generateId(), name: newStudentName.trim(), grades: {} };
-                 onUpdateCourse(course.id, { students: [...(course.students || []), newStudent] });
-                 setNewStudentName('');
-                 setShowAddStudentModal(false);
-             }
-        };
-
-        const handleGradeChange = (unitId, grade) => {
-            if (!activeStudent) return;
-            const updatedStudent = { ...activeStudent, grades: { ...activeStudent.grades, [unitId]: grade } };
-            setActiveStudent(updatedStudent);
-            onUpdateCourse(course.id, { students: course.students.map(s => s.id === activeStudent.id ? updatedStudent : s) });
-        };
-
-        const toggleLock = (unitId) => {
-            if (!activeStudent) return;
-            const currentLock = activeStudent.lockedGrades?.[unitId] || false;
-            if (currentLock && !canUnlock) { alert("Admins only."); return; }
-            const updatedStudent = { ...activeStudent, lockedGrades: { ...(activeStudent.lockedGrades || {}), [unitId]: !currentLock } };
-            setActiveStudent(updatedStudent);
-            onUpdateCourse(course.id, { students: course.students.map(s => s.id === activeStudent.id ? updatedStudent : s) });
-        };
-
-        if (view === 'editor' && activeStudent) {
-            const unitsWithGrades = mergeUnitsAndGrades(course.units, activeStudent.grades, activeStudent.lockedGrades);
-            const sortedUnits = sortUnits(unitsWithGrades);
-            const results = calculateQualification(unitsWithGrades, course.qualification);
-            const availableGrades = getAvailableGrades(course.qualification);
-            return (
-                <div className="flex flex-col h-[calc(100vh-100px)]"> 
-                    <div className="bg-white border-b border-slate-200 shadow-sm z-10 p-4">
-                        <div className="max-w-6xl mx-auto w-full">
-                            <div className="flex items-center justify-between mb-4"><button onClick={() => setView('list')} className="flex items-center text-slate-500 hover:text-slate-900 transition-colors text-sm font-medium"><ArrowLeft className="w-4 h-4 mr-1" /> Back to Students</button></div>
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                                <div className="flex-1"><label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Student Name</label><div className="text-2xl font-bold text-slate-900">{activeStudent.name}</div></div>
-                                <ResultsPanel results={results} variant="compact" />
-                            </div>
-                        </div>
-                    </div>
-                    <div className="flex-1 overflow-y-auto bg-slate-50 p-6">
-                         <div className="max-w-6xl mx-auto">
-                            <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-                                <table className="min-w-full divide-y divide-slate-200">
-                                    <thead className="bg-slate-50 sticky top-0"><tr><th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Unit</th><th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Grade</th><th className="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Lock</th></tr></thead>
-                                    <tbody className="bg-white divide-y divide-slate-200">
-                                        {sortedUnits.map((unit) => (
-                                            <tr key={unit.id} className="hover:bg-slate-50 transition-colors">
-                                                <td className="px-6 py-4"><div className="text-sm font-medium text-slate-900">{unit.name}</div><div className="text-xs text-slate-500">{unit.type} &bull; {unit.glh} GLH</div></td>
-                                                <td className="px-6 py-4 whitespace-nowrap"><select value={unit.grade} onChange={(e) => handleGradeChange(unit.id, e.target.value)} disabled={unit.isLocked} className="block w-full pl-3 pr-10 py-1 text-sm border-slate-300 rounded-md disabled:bg-slate-50">{availableGrades.map((g) => <option key={g} value={g}>{g}</option>)}</select></td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-center"><button onClick={() => toggleLock(unit.id)} disabled={unit.isLocked && !canUnlock} className={`p-1.5 rounded-md ${unit.isLocked ? 'text-brand-600 bg-brand-50' : 'text-slate-300'}`}>{unit.isLocked ? <Lock className="w-4 h-4" /> : <div className="w-4 h-4 border-2 border-slate-300 rounded" />}</button></td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                         </div>
-                    </div>
-                </div>
-            );
-        }
-
-        return (
-            <div className="space-y-6 relative">
-                 {showAddStudentModal && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-                        <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
-                            <h3 className="text-lg font-bold text-slate-900 mb-4">Add New Student</h3>
-                            <form onSubmit={handleAddStudentSubmit}>
-                                <div className="mb-4"><label className="block text-sm font-medium text-slate-700 mb-1">Full Name</label><input type="text" autoFocus required value={newStudentName} onChange={(e) => setNewStudentName(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg" placeholder="John Doe" /></div>
-                                <div className="flex justify-end space-x-3"><button type="button" onClick={() => setShowAddStudentModal(false)} className="px-4 py-2 text-slate-700 hover:bg-slate-100 rounded-lg">Cancel</button><button type="submit" className="px-4 py-2 bg-brand-600 text-white hover:bg-brand-700 rounded-lg">Add Student</button></div>
-                            </form>
-                        </div>
-                    </div>
-                 )}
-                <div className="flex items-center justify-between"><button onClick={onBack} className="flex items-center text-slate-500 hover:text-slate-900 transition-colors"><ArrowLeft className="w-4 h-4 mr-1" /> Back to Dashboard</button></div>
-                <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-6 mb-6 flex justify-between items-start">
-                    <div><h2 className="text-2xl font-bold text-slate-900 mb-1">{course.title}</h2><p className="text-sm text-slate-500">{course.subject} &bull; {course.qualification}</p></div>
-                    {canManageStudents && <button onClick={() => setShowAddStudentModal(true)} className="flex items-center px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 text-sm font-medium"><UserPlus className="w-4 h-4 mr-2" /> Add Student</button>}
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {(course.students || []).map(student => (
-                        <div key={student.id} onClick={() => { setActiveStudent(student); setView('editor'); }} className="group bg-white border border-slate-200 rounded-xl p-5 shadow-sm hover:shadow-md cursor-pointer border-l-4 border-l-brand-500">
-                            <h3 className="font-bold text-slate-900 group-hover:text-brand-600 mb-3">{student.name}</h3>
-                            <div className="bg-slate-50 rounded-lg p-3 flex justify-between items-center text-xs font-bold text-slate-700"><span>Grade: {calculateQualification(mergeUnitsAndGrades(course.units, student.grades), course.qualification).grade}</span><span>UCAS: {calculateQualification(mergeUnitsAndGrades(course.units, student.grades), course.qualification).ucasPoints}</span></div>
-                        </div>
-                    ))}
-                </div>
-            </div>
         );
       };
 
@@ -1034,8 +357,7 @@
         const [courses, setCourses] = useState(() => {
             const saved = localStorage.getItem('gm_courses');
             return saved ? JSON.parse(saved) : [
-                { id: '1', title: 'Year 12 Esports Group A', academicYear: '2024-25', subject: Subject.ESPORTS, qualification: QualificationType.EXTENDED_DIPLOMA, units: sortUnits(SAMPLE_UNITS_ESPORTS.map(u => ({...u, id: generateId()}))), students: [] },
-                { id: '2', title: 'BTEC Level 2 IT', academicYear: '2024-25', subject: Subject.IT, qualification: QualificationType.EXTENDED_DIPLOMA, units: sortUnits(SAMPLE_UNITS_IT.map(u => ({...u, id: generateId()}))), students: [] }
+                { id: '1', title: 'Year 12 Esports Group A', academicYear: '2024-25', subject: Subject.ESPORTS, qualification: QualificationType.EXTENDED_DIPLOMA, units: sortUnits([ { name: "Unit 1: Introduction to Esports", glh: 60, type: UnitType.INTERNAL, id: 'u1' }, { name: "Unit 2: Esports Skills, Strategies and Analysis", glh: 120, type: UnitType.INTERNAL, id: 'u2' } ]), students: [] },
             ];
         });
 
@@ -1067,29 +389,131 @@
                 <header className="bg-white border-b h-16 flex items-center px-8 justify-between sticky top-0 z-20 shadow-sm">
                     <div className="flex items-center space-x-3"><div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center text-white font-bold">G</div><span className="font-bold">GradeMaster</span></div>
                     <nav className="flex space-x-1 bg-slate-100 p-1 rounded-lg">
-                        <button onClick={() => setActiveView('dashboard')} className={`px-4 py-1.5 text-sm font-medium rounded-md ${activeView === 'dashboard' ? 'bg-white shadow-sm' : 'text-slate-500'}`}>Dashboard</button>
+                        <button onClick={() => setActiveView('dashboard')} className={`px-4 py-1.5 text-sm font-medium rounded-md ${activeView === 'dashboard' ? 'bg-white shadow-sm' : 'text-slate-50'}`}>Dashboard</button>
                         <button onClick={() => setActiveView('builder')} className={`px-4 py-1.5 text-sm font-medium rounded-md ${activeView === 'builder' ? 'bg-white shadow-sm' : 'text-slate-500'}`}>Course Builder</button>
-                        {(currentUser.role === UserRole.ADMIN || currentUser.role === UserRole.SUPERUSER) && <button onClick={() => setActiveView('archive')} className={`px-4 py-1.5 text-sm font-medium rounded-md ${activeView === 'archive' ? 'bg-white shadow-sm' : 'text-slate-500'}`}>Archive</button>}
-                        {currentUser.role === UserRole.SUPERUSER && <><button onClick={() => setActiveView('users')} className={`px-4 py-1.5 text-sm font-medium rounded-md ${activeView === 'users' ? 'bg-white shadow-sm' : 'text-slate-500'}`}>Users</button><button onClick={() => setActiveView('backup')} className={`px-4 py-1.5 text-sm font-medium rounded-md ${activeView === 'backup' ? 'bg-white shadow-sm' : 'text-slate-500'}`}>Backup</button></>}
+                        {currentUser.role === UserRole.SUPERUSER && <button onClick={() => setActiveView('users')} className={`px-4 py-1.5 text-sm font-medium rounded-md ${activeView === 'users' ? 'bg-white shadow-sm' : 'text-slate-500'}`}>Users</button>}
                     </nav>
                     <button onClick={() => setCurrentUser(null)} className="p-2 text-slate-400 hover:text-slate-600"><LogOut className="w-5 h-5" /></button>
                 </header>
                 <main className="max-w-7xl mx-auto px-8 py-8">
                     {activeView === 'dashboard' && (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {courses.filter(c => !c.isArchived).map(course => (
-                                <div key={course.id} onClick={() => setSelectedCourseId(course.id)} className="bg-white border rounded-xl shadow-sm hover:shadow-lg transition-all cursor-pointer overflow-hidden p-6">
-                                    <div className="text-xs font-bold text-slate-400 mb-1">{course.academicYear}</div>
-                                    <h3 className="text-xl font-bold mb-1">{course.title}</h3>
-                                    <p className="text-sm text-slate-500">{course.subject} &bull; {course.students.length} Students</p>
-                                </div>
+                            {courses.map(course => (
+                                <div key={course.id} onClick={() => setSelectedCourseId(course.id)} className="bg-white border rounded-xl shadow-sm hover:shadow-lg p-6 cursor-pointer"><h3 className="text-xl font-bold mb-1">{course.title}</h3><p className="text-sm text-slate-500">{course.subject}</p></div>
                             ))}
                         </div>
                     )}
                     {activeView === 'builder' && <CourseManager courses={courses} onUpdate={handleUpdateCourse} onCreate={handleCreateCourse} onDelete={handleDeleteCourse} currentUser={currentUser} />}
-                    {activeView === 'users' && <UserManagement users={users} setUsers={setUsers} currentUser={currentUser} courses={courses} setCourses={setCourses} />}
-                    {activeView === 'backup' && <BackupRestore users={users} courses={courses} setUsers={setUsers} setCourses={setCourses} />}
+                    {activeView === 'users' && <UserManagement users={users} setUsers={setUsers} currentUser={currentUser} />}
                 </main>
+            </div>
+        );
+      };
+
+      const StudentManager = ({ course, onBack, onUpdateCourse, currentUser }) => {
+        const [view, setView] = useState('list');
+        const [activeStudent, setActiveStudent] = useState(null);
+        const [showAddStudentModal, setShowAddStudentModal] = useState(false);
+        const [newStudentName, setNewStudentName] = useState('');
+
+        const handleAddStudentSubmit = (e) => {
+             e.preventDefault();
+             if (newStudentName.trim()) {
+                 const newStudent = { id: generateId(), name: newStudentName.trim(), grades: {} };
+                 onUpdateCourse(course.id, { students: [...(course.students || []), newStudent] });
+                 setNewStudentName(''); setShowAddStudentModal(false);
+             }
+        };
+
+        if (view === 'editor' && activeStudent) {
+            const unitsWithGrades = mergeUnitsAndGrades(course.units, activeStudent.grades, activeStudent.lockedGrades);
+            const sortedUnits = sortUnits(unitsWithGrades);
+            const results = calculateQualification(unitsWithGrades, course.qualification);
+            const availableGrades = getAvailableGrades(course.qualification);
+            return (
+                <div className="flex flex-col h-[calc(100vh-100px)]"> 
+                    <div className="bg-white border-b shadow-sm p-4"><button onClick={() => setView('list')} className="text-slate-500 flex items-center mb-4"><ArrowLeft className="w-4 h-4 mr-1" /> Back</button><h2 className="text-2xl font-bold">{activeStudent.name}</h2></div>
+                    <div className="flex-1 overflow-y-auto bg-slate-50 p-6">
+                        <div className="max-w-6xl mx-auto grid grid-cols-3 gap-6">
+                            <div className="col-span-2 bg-white border rounded-xl overflow-hidden">
+                                <table className="min-w-full divide-y">
+                                    <thead className="bg-slate-50"><tr><th className="px-6 py-3 text-left">Unit</th><th className="px-6 py-3 text-left">Grade</th></tr></thead>
+                                    <tbody className="divide-y">
+                                        {sortedUnits.map(unit => (
+                                            <tr key={unit.id} className="hover:bg-slate-50">
+                                                <td className="px-6 py-4 font-medium">{unit.name}</td>
+                                                <td className="px-6 py-4">
+                                                    <select value={unit.grade} onChange={(e) => {
+                                                        const updatedStudent = { ...activeStudent, grades: { ...activeStudent.grades, [unit.id]: e.target.value } };
+                                                        setActiveStudent(updatedStudent);
+                                                        onUpdateCourse(course.id, { students: course.students.map(s => s.id === activeStudent.id ? updatedStudent : s) });
+                                                    }} className="block w-full border-slate-300 rounded-md">{availableGrades.map(g => <option key={g} value={g}>{g}</option>)}</select>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div><ResultsPanel results={results} /></div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        return (
+            <div>
+                 {showAddStudentModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+                        <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+                            <h3 className="text-lg font-bold mb-4">Add Student</h3>
+                            <form onSubmit={handleAddStudentSubmit}>
+                                <input type="text" autoFocus required value={newStudentName} onChange={(e) => setNewStudentName(e.target.value)} className="w-full px-3 py-2 border rounded-lg mb-4" placeholder="Name" />
+                                <div className="flex justify-end space-x-3"><button type="button" onClick={() => setShowAddStudentModal(false)} className="px-4 py-2">Cancel</button><button type="submit" className="px-4 py-2 bg-brand-600 text-white rounded-lg">Add</button></div>
+                            </form>
+                        </div>
+                    </div>
+                 )}
+                <div className="flex justify-between items-center mb-6"><button onClick={onBack} className="flex items-center text-slate-500"><ArrowLeft className="w-4 h-4 mr-1" /> Back</button><button onClick={() => setShowAddStudentModal(true)} className="bg-brand-600 text-white px-4 py-2 rounded-lg text-sm font-medium">Add Student</button></div>
+                <div className="grid grid-cols-3 gap-6">
+                    {(course.students || []).map(student => (
+                        <div key={student.id} onClick={() => { setActiveStudent(student); setView('editor'); }} className="bg-white border rounded-xl p-5 shadow-sm hover:shadow-md cursor-pointer"><h3 className="font-bold">{student.name}</h3></div>
+                    ))}
+                </div>
+            </div>
+        );
+      };
+
+      const CourseManager = ({ courses, onUpdate, onCreate, onDelete, currentUser }) => {
+        const [view, setView] = useState('list');
+        const [editingCourse, setEditingCourse] = useState(null);
+        const [formData, setFormData] = useState({ title: '', year: '2024-25', subject: Subject.ESPORTS, qualification: QualificationType.EXTENDED_DIPLOMA, units: [] });
+        const handleSave = (e) => { e.preventDefault(); if (editingCourse) onUpdate(editingCourse.id, formData); else onCreate(formData); setView('list'); };
+        if (view === 'list') {
+            return (
+                <div className="space-y-6">
+                    <div className="flex justify-between items-center"><h2 className="text-2xl font-bold">Course Builder</h2><button onClick={() => { setEditingCourse(null); setFormData({ title: '', year: '2024-25', subject: Subject.ESPORTS, qualification: QualificationType.EXTENDED_DIPLOMA, units: sortUnits(SAMPLE_UNITS_ESPORTS.map(u => ({...u, id: generateId()}))) }); setView('form'); }} className="bg-brand-600 text-white px-4 py-2 rounded-lg text-sm">Add Course</button></div>
+                    <div className="bg-white border rounded-xl overflow-hidden">
+                        <table className="min-w-full divide-y">
+                            <thead className="bg-slate-50"><tr><th className="px-6 py-3 text-left">Title</th><th className="px-6 py-3 text-right">Actions</th></tr></thead>
+                            <tbody className="divide-y">
+                                {courses.map(c => (
+                                    <tr key={c.id} className="hover:bg-slate-50"><td className="px-6 py-4">{c.title}</td><td className="px-6 py-4 text-right"><button onClick={() => { setEditingCourse(c); setFormData(c); setView('form'); }} className="text-brand-600 mr-4">Edit</button><button onClick={() => onDelete(c.id)} className="text-red-600">Delete</button></td></tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            );
+        }
+        return (
+            <div className="max-w-2xl mx-auto bg-white border p-8 rounded-xl shadow-sm">
+                <h3 className="text-xl font-bold mb-6">{editingCourse ? 'Edit' : 'Create'} Course</h3>
+                <form onSubmit={handleSave} className="space-y-5">
+                    <input type="text" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="block w-full border px-4 py-2 rounded-lg" placeholder="Course Title" required />
+                    <select value={formData.subject} onChange={e => setFormData({...formData, subject: e.target.value})} className="block w-full border px-4 py-2 rounded-lg">{Object.values(Subject).map(s => <option key={s} value={s}>{s}</option>)}</select>
+                    <select value={formData.qualification} onChange={e => setFormData({...formData, qualification: e.target.value})} className="block w-full border px-4 py-2 rounded-lg">{Object.values(QualificationType).map(q => <option key={q} value={q}>{q}</option>)}</select>
+                    <div className="flex justify-end space-x-3"><button type="button" onClick={() => setView('list')} className="px-6 py-2">Cancel</button><button type="submit" className="bg-brand-600 text-white px-6 py-2 rounded-lg">Save</button></div>
+                </form>
             </div>
         );
       };
